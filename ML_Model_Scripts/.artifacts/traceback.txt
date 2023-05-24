@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML_Model_Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/fhe/compilation/compiler.py", line 508, in compile
+    circuit = Circuit(self.graph, mlir, self.configuration)
+  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML_Model_Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/fhe/compilation/circuit.py", line 43, in __init__
+    self._initialize_client_and_server()
+  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML_Model_Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/fhe/compilation/circuit.py", line 46, in _initialize_client_and_server
+    self.server = Server.create(self.mlir, self.configuration)
+  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML_Model_Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/fhe/compilation/server.py", line 147, in create
+    compilation_result = support.compile(mlir, options)
+  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML_Model_Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/compiler/library_support.py", line 155, in compile
+    self.cpp().compile(mlir_program, options.cpp())
+RuntimeError: Can't emit artifacts: Command failed:ld --shared -o /tmp/tmppx0mezjo/sharedlib.so /tmp/tmppx0mezjo.module-0.mlir.o /mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML_Model_Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete_python.libs/libConcretelangRuntime-1d065e20.so -rpath=/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML_Model_Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete_python.libs --disable-new-dtags 2>&1
+Code:256
+ld: cannot find /mnt/c/Users/Johann: No such file or directory
+ld: cannot find Vivas/Documents/Benjos Files/School/2022-2023/THESIS/ML_Model_Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete_python.libs/libConcretelangRuntime-1d065e20.so -rpath=/mnt/c/Users/Johann Vivas/Documents/Benjos: No such file or directory
+ld: cannot find Files/School/2022-2023/THESIS/ML_Model_Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete_python.libs: No such file or directory
+

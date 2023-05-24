@@ -1,0 +1,16 @@
+module {
+  func.func @main(%arg0: tensor<1x15x!FHE.eint<16>>) -> tensor<1x4x!FHE.esint<16>> {
+    %cst = arith.constant dense<[[-32, 58, 71, -41], [-8, -40, 111, -7], [-78, -6, 14, 127], [15, 29, 12, 0], [5, -43, 42, 52], [22, 85, 77, -128], [-8, 31, 21, 12], [-15, 38, 11, 22], [47, 39, -85, 55], [12, 12, 33, -1], [11, 13, -1, 32], [59, -91, 54, 34], [-3, 15, 12, 32], [20, 5, -7, 38], [-8, 10, 21, 33]]> : tensor<15x4xi17>
+    %0 = "FHELinalg.matmul_eint_int"(%arg0, %cst) : (tensor<1x15x!FHE.eint<16>>, tensor<15x4xi17>) -> tensor<1x4x!FHE.eint<16>>
+    %1 = "FHELinalg.sum"(%arg0) {axes = [1], keep_dims = true} : (tensor<1x15x!FHE.eint<16>>) -> tensor<1x1x!FHE.eint<16>>
+    %c14_i17 = arith.constant 14 : i17
+    %cst_0 = tensor.from_elements %c14_i17 : tensor<1xi17>
+    %2 = "FHELinalg.mul_eint_int"(%1, %cst_0) : (tensor<1x1x!FHE.eint<16>>, tensor<1xi17>) -> tensor<1x1x!FHE.eint<16>>
+    %3 = "FHELinalg.to_signed"(%0) : (tensor<1x4x!FHE.eint<16>>) -> tensor<1x4x!FHE.esint<16>>
+    %4 = "FHELinalg.to_signed"(%2) : (tensor<1x1x!FHE.eint<16>>) -> tensor<1x1x!FHE.esint<16>>
+    %5 = "FHELinalg.sub_eint"(%3, %4) : (tensor<1x4x!FHE.esint<16>>, tensor<1x1x!FHE.esint<16>>) -> tensor<1x4x!FHE.esint<16>>
+    %cst_1 = arith.constant dense<[[-6658, 3416, 413, 2828]]> : tensor<1x4xi17>
+    %6 = "FHELinalg.add_eint_int"(%5, %cst_1) : (tensor<1x4x!FHE.esint<16>>, tensor<1x4xi17>) -> tensor<1x4x!FHE.esint<16>>
+    return %6 : tensor<1x4x!FHE.esint<16>>
+  }
+}
