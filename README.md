@@ -7,5 +7,5 @@ Repository for an FHE-powered viral strain classification tool and web applicati
 - If you can't fix your filenames without risking breaking several applications, it's recommended to finish training, compilation, and saving of your Concrete-ML model on the Docker container.
 
 ## Instructions
-- This project does not contain a virtual environment. Make your own and install the packages mentioned in requirements.txt to get things going.
+- This project does not contain a virtual environment or the libraries required to make the project run (yet). Make your own and install the packages mentioned in requirements.txt to get things going.
 - THis project DOES contain the Django files for the app. Use those.
