@@ -5,6 +5,7 @@ from . import views
 app_name = "classifier"
 
 urlpatterns = [
-    path('', views.hello_world),
-    path('show_input', views.show_input),
+    path('', views.index, name='index'),
+    path('show_input', views.show_input, name='show_input'),
+    path('process_submit', views.process_submit, name='process_submit')
 ]

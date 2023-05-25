@@ -13,17 +13,13 @@
     <div class="col-md-6 offset-md-3 mt-5">
         <h1>FHE-enabled SARS-CoV-2 Sequence Classifier</h1>
         <p>Powered by Concrete-ML</p>
-        <form accept-charset="UTF-8" action="/show_input" method="POST" enctype="multipart/form-data">
+        <form accept-charset="UTF-8" action="{% url 'classifier:process_submit' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            <div class="form-group">
-                <label for="exampleInputName">Full Name</label>
-                <input type="text" name="fullname" class="form-control" id="exampleInputName" placeholder="Enter your name and surname" required="required">
-            </div>
-            <hr>
             <div class="form-group mt-3">
                 <label class="mr-2">Upload your Sequence:</label>
                 <input type="file" name="file">
             </div>
+            <!-- {{ form.as_p }} -->
             <hr>
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
