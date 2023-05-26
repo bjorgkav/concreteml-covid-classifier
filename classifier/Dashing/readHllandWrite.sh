@@ -17,17 +17,21 @@ for f in classifier/Dashing/temporary/*.hll
 do 
     content=$(classifier/Dashing/dashing_s512 view $f)
 
+#    $f = ${f#"classifierDashing"}
+#    $f = ${f%".fasta.w.31.spacing.9.hll"}
+
     #sed 's/[//g;]//g'
     echo "$f, $content" >> classifier/Dashing/output.txt
 done
 
 #remove all occurrences of [ and ] in output
 echo "Removing [ and ] from output and placing in csv..."
-echo "$(sed -i 's/[][]//g' classifier/Dashing/output.txt)"
-echo "$(sed -i 's/\<temporary\>//g' classifier/Dashing/output.txt)"
-echo "$(sed -i 's/\///g' classifier/Dashing/output.txt)"
+echo -n "$(sed -i 's/[][]//g' classifier/Dashing/output.txt)"
+echo -n "$(sed -i 's/\<temporary\>//g' classifier/Dashing/output.txt)"
+echo -n "$(sed -i 's/\///g' classifier/Dashing/output.txt)"
 #| sed -e 's/\<FASTAFiles\>//g' | sed -e 's/\///g'
-echo "$(sed -i 's/\.//g' classifier/Dashing/output.txt)"
-echo "$(sed -i 's/\<fastaw31spacing9hll\>//g' classifier/Dashing/output.txt)"
+echo -n "$(sed -i 's/\.//g' classifier/Dashing/output.txt)"
+echo "$(sed -i 's/classifierDashing//g' classifier/Dashing/output.txt)"
+echo "$(sed -i 's/fastaw31spacing9hll//g' classifier/Dashing/output.txt)"
 
 mv classifier/Dashing/output.txt classifier/Dashing/output.csv

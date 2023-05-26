@@ -5,6 +5,8 @@ from .forms import SubmissionForm
 from concreteClassifierApp.settings import BASE_DIR
 import os
 import subprocess
+from pandas import DataFrame as pd
+from pandas import read_csv
 
 # Create your views here.
 def index(request):
@@ -73,9 +75,26 @@ def process_submit(request):
 
         use_dashing()
 
+        dashing_output = os.path.join(BASE_DIR, f"classifier/Dashing/output.csv")
+
+        drop_columns(dashing_output)
+
         context = {'truncate_output':truncate_output ,'truncate_output_length':len(truncate_output), 'accession_id':id, 'metadata':fasta_firstline}
     
     return render(request, 'upload_success.html', context)
 
 def client_generate_keys(request):
     pass
+
+def drop_columns(file, features_txt = os.path.join(BASE_DIR, "selected features.txt")):
+    """Takes the output CSV file and drops the non-selected columns specified in the 'list' argument."""
+    with open(features_txt, "r") as feature_file:
+        temp_list = list(f for f in feature_file.read().splitlines())
+
+    feature_list = ["Accession ID"] + temp_list
+
+    drop_df = read_csv(file)
+    drop_df = drop_df[[column for column in feature_list]]
+    drop_df.to_csv(os.path.join(BASE_DIR, "classifier/Dashing/output.csv"), index=False, header=True)
+
+    #print(drop_df.columns.values.tolist())
