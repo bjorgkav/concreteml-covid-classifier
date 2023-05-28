@@ -9,8 +9,7 @@ from numpy import std
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.metrics import accuracy_score, roc_auc_score
-from concrete.ml.sklearn import LogisticRegression as concLR
-from concrete.ml.sklearn import LinearRegression
+from concrete.ml.sklearn import LogisticRegression, LinearRegression
 from sklearn.linear_model import LogisticRegression as skLR
 from sklearn.linear_model import LinearRegression as skLinear
 from sklearn.preprocessing import StandardScaler
@@ -63,7 +62,7 @@ set = -1
 #    dataset_name = "ADJUSTED DOWNSIZED DATASET (05-04-2023).csv"
 #dataset = pd.read_csv(dataset_name)
 
-dataset = pd.read_csv("../Dataset/AFHE DATASET (05-18-2023).csv")
+dataset = pd.read_csv("AFHE DATASET (05-18-2023).csv")
 
 #print(dataset['Lineage'].value_counts())
 
@@ -131,13 +130,13 @@ print("Accuracy for sklearn: ", skmodel.score(X_test,y_test)*100,"%")
 
 
 # Initialize model and fix the number of bits to used for quantization 
-model = concLR(C=1)
+model = LogisticRegression(C=1)
 
 # Fit the model
 model.fit(X_train, y_train)
 
 # Run the predictions on non-encrypted data as a reference
-y_pred_clear = model.predict(X_test) #execute_in_fhe = False might be replaced with fhe = "execute"
+y_pred_clear = model.predict(X_test, execute_in_fhe = False)
 
 # Output (plaintext vs FHE):
 # print("In clear:  ", le.inverse_transform(y_pred_clear))
