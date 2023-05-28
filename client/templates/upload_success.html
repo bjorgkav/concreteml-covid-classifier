@@ -16,12 +16,12 @@
 
         <h3>Upload successful! Your data has been encrypted.</h3>
 
-        <p>Your data is ready to be passed onto the server for FHE-enabled classification.</p>
+        <p>Your data has been encrypted and sent to the server for FHE-enabled classification, and is now ready to be downloaded.</p>
 
         <form accept-charset="UTF-8" action="{% url 'classifier:start_classification' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div>
-                <button type="submit" class="btn btn-primary">Submit encrypted data for classification</button>
+                <button type="submit" class="btn btn-primary">Download encrypted predictions</button>
             </div>
         </form>
 

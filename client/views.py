@@ -8,6 +8,7 @@ import shutil
 from shutil import copyfile
 from pandas import DataFrame as pd
 from pandas import read_csv
+from classifier.views import start_classification
 
 # Create your views here.
 def index(request):
@@ -88,7 +89,8 @@ def process_encrypt(request):
     client_send_eval_keys_to_server(serialized_evaluation_keys)
     encrypted_data = encrypt_data(request, fhemodel_client)
 
-    # setting encrypted data in session storage ()
+    # setting encrypted data in session storage
+    start_classification(encrypted_data=encrypted_data)
 
     return render(request, "upload_success.html", context={'dict':{'keys':serialized_evaluation_keys, 'data':encrypted_data}})
 
