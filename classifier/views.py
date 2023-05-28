@@ -1,3 +1,4 @@
+from django.http import FileResponse
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
 
 from .models import Submission
@@ -12,7 +13,7 @@ from pandas import read_csv
 def index(request):
     form = SubmissionForm()
     context = {'form':form}
-    return render(request, 'index.html', context=context)
+    return render(request, 'client/index.html', context=context)
 
 def show_input(request):
     if request.method == 'POST':
@@ -56,16 +57,9 @@ def write_fasta(id, first_line, sequence):
 def use_dashing():
     """Calls the appropriate Dashing commands on the files in the classifier/Dashing/temporary folder. Results in a CSV file containing the extracted features from the sequence and the accession ID."""
     subprocess.call(['sh', os.path.join(BASE_DIR, f"classifier/Dashing/dashingShell.sh")])
-    #subprocess.call(['sh', os.path.join(BASE_DIR, f"classifier/Dashing/dashing_s512 sketch -k31 -p13 -S9 {os.path.join(BASE_DIR, 'classifier/Dashing/temporary/*.fasta')}")])
-    #subprocess.call(['sh', os.path.join(BASE_DIR, f"classifier/Dashing/readHLLandWrite.sh")])
 
 def process_submit(request):
     if request.method == "POST":
-        # create a submission entry and save it to the database
-        # form = SubmissionForm(request.POST or None, request.FILES or None)
-        # if form.is_valid():
-        #     new_submission = form.save()
-        #fasta_fpath = Submission.objects.get(id=new_submission.id).getFile()
 
         fasta_fpath = request.FILES['file']
 
@@ -86,6 +80,11 @@ def process_submit(request):
 def client_generate_keys(request):
     pass
 
+def send_client_specs(request):
+    filepath = os.path.join(BASE_DIR, rf'Compiled Model/client.zip')
+    response = FileResponse(open(filepath, "rb"), as_attachment=True)
+    return response
+
 def drop_columns(file, features_txt = os.path.join(BASE_DIR, "selected features.txt")):
     """Takes the output CSV file and drops the non-selected columns specified in the 'list' argument."""
     with open(features_txt, "r") as feature_file:
@@ -98,3 +97,6 @@ def drop_columns(file, features_txt = os.path.join(BASE_DIR, "selected features.
     drop_df.to_csv(os.path.join(BASE_DIR, "classifier/Dashing/output.csv"), index=False, header=True)
 
     #print(drop_df.columns.values.tolist())
+
+def start_classification(request, data):
+    pass

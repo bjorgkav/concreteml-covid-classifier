@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'classifier'
+    'classifier',
+    'client'
 ]
 
 MIDDLEWARE = [
@@ -120,11 +121,11 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # BASE_DIR is the base directory of the project NOT the app. this will override any css/files that have the same name in the app static files
-# STATICFILES_DIR = [
-#     os.path.join(BASE_DIR, 'static')
-# ]
+STATICFILES_DIR = [
+    os.path.join(BASE_DIR, 'static')
+]
 
-MEDIA_ROOT = 'classifier/uploads/'
+MEDIA_ROOT = 'uploads/'
 
 # MEDIA_URL = 'uploads/'
 

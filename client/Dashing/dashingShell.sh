@@ -7,8 +7,8 @@
 
 echo "Running Dashing tool..."
 
-classifier/Dashing/dashing_s512 sketch -k31 -p13 -S9 classifier/Dashing/temporary/*.fasta
+client/Dashing/dashing_s512 sketch -k31 -p13 -S9 client/Dashing/temporary/*.fasta
 
 echo "Reading output and Creating CSV..."
 
-classifier/Dashing/readHLLandWrite.sh #(requires chmod +x readHLLandWrite.sh for execution permissions)
+client/Dashing/readHLLandWrite.sh #(requires chmod +x readHLLandWrite.sh for execution permissions)

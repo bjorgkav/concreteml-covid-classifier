@@ -14,15 +14,24 @@
         <h1>FHE-enabled SARS-CoV-2 Sequence Classifier</h1>
         <p>Powered by Concrete-ML</p>
 
-        <h3>Upload successful!</h3>
+        <h3>Upload successful! Your data has been encrypted.</h3>
 
-        <p>FASTA Accession ID (Assuming GISAID): {{ accession_id }}</p>
+        <p>Your data is ready to be passed onto the server for FHE-enabled classification.</p>
 
-        <p>First Line: {{ metadata }}</p>
+        <form accept-charset="UTF-8" action="{% url 'classifier:start_classification' %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div>
+                <button type="submit" class="btn btn-primary">Submit encrypted data for classification</button>
+            </div>
+        </form>
 
-        <p>Truncated FASTA Sequence Size (Removed first 20,000 bases): {{ truncate_output_length }}</p>
+        <br><br>
 
-        <p>Content: {{ truncate_output|slice:"0:10" }}...</p>
+        <h3>Your generated keys and encrypted file binaries:</h3>
+        <ul>
+            {% for key, value in dict.items %}
+            <li>{{key}}: {{value}}</li>
+            {% endfor %}
         </ul>
     </div> 
 </body>
