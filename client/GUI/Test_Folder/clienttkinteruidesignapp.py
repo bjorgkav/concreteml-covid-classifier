@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import subprocess
 from customtkinter import (
     CTk,
     CTkButton,
@@ -6,17 +7,21 @@ from customtkinter import (
     CTkFont,
     CTkFrame,
     CTkLabel,
+    IntVar,
+    StringVar,
     set_appearance_mode,
     set_default_color_theme)
 
+from tkinter import filedialog as fd
+
 from concrete.ml.deployment import FHEModelClient
 
-import os, requests
+import os, requests, stat
 
 from pandas import DataFrame as pd
 from pandas import read_csv
 
-
+#region class
 class ClientTkinterUiDesignApp:
     def __init__(self, master=None):
         # build ui
@@ -65,7 +70,8 @@ class ClientTkinterUiDesignApp:
             justify="left",
             text='Enter your fasta or zip filepath for Dashing:')
         self.dashing_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
-        self.dashing_filename = CTkEntry(self.dashing_frame)
+        self.dashing_name_var = StringVar()
+        self.dashing_filename = CTkEntry(self.dashing_frame, textvariable=self.dashing_name_var)
         self.dashing_filename.configure(
             exportselection=False,
             justify="left",
@@ -74,9 +80,9 @@ class ClientTkinterUiDesignApp:
             width=460)
         self.dashing_filename.grid(column=0, padx=10, row=1)
         self.dashing_browse = CTkButton(self.dashing_frame, hover=True)
-        self.dashing_browse.configure(hover_color="#299cd9", text='Browse...')
+        self.dashing_browse.configure(hover_color="#299cd9", text='Browse...', command=self.getDashingInput)
         self.dashing_browse.grid(column=2, padx=10, row=1)
-        self.dashing_begin = CTkButton(self.dashing_frame)
+        self.dashing_begin = CTkButton(self.dashing_frame, command=self.beginDashing)
         self.dashing_begin.configure(
             hover_color="#299cd9",
             text='Begin dashing',
@@ -95,7 +101,8 @@ class ClientTkinterUiDesignApp:
             justify="left",
             text='Enter your dashing output filepath for encryption:')
         self.encrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
-        self.encrypt_filename = CTkEntry(self.encrypt_frame)
+        self.encrypt_name_var = StringVar()
+        self.encrypt_filename = CTkEntry(self.encrypt_frame, textvariable=self.encrypt_name_var)
         self.encrypt_filename.configure(
             exportselection=False,
             justify="left",
@@ -103,7 +110,7 @@ class ClientTkinterUiDesignApp:
             takefocus=False,
             width=460)
         self.encrypt_filename.grid(column=0, padx=10, row=1)
-        self.encrypt_browse = CTkButton(self.encrypt_frame, hover=True)
+        self.encrypt_browse = CTkButton(self.encrypt_frame, hover=True, command=self.getEncryptInput)
         self.encrypt_browse.configure(hover_color="#299cd9", text='Browse...')
         self.encrypt_browse.grid(column=2, padx=10, row=1)
         self.encrypt_begin = CTkButton(self.encrypt_frame)
@@ -125,15 +132,93 @@ class ClientTkinterUiDesignApp:
     def run(self):
         self.mainwindow.mainloop()
 
+    def getDashingInput(self):
+        dashing_filename = fd.askopenfilename()
+        self.dashing_name_var.set(dashing_filename)
+
+    def getEncryptInput(self):
+        encrypt_filename = fd.askopenfilename()
+        self.encrypt_name_var.set(encrypt_filename)
+
+    def beginDashing(self):
+        filename = self.dashing_name_var.get()
+        first_line, sequence, id = self.readTruncateSequence(filename)
+        self.writeFasta(id, first_line, sequence)
+        self.useDashing()
+        dashing_output = os.path.join(os.path.dirname(__file__), f"output.csv")
+        self.dropColumns(dashing_output)
+
+    def dropColumns(self, file, features_txt = "./selected features.txt"):
+        with open(features_txt, "r") as feature_file:
+            temp_list = list(f for f in feature_file.read().splitlines())
+
+            feature_list = ["Accession ID"] + temp_list
+
+            drop_df = read_csv(file)
+            drop_df = drop_df[[column for column in feature_list]] 
+            drop_df.to_csv("./output.csv", index=False, header=True)
+
+    def readTruncateSequence(self, fasta_fpath):
+        truncated_seq = ""
+
+        with open(fasta_fpath, "r") as f:
+            for line in f.readlines(): #chunks() method is essentially opening the file in binary mode.
+                if ">" not in line:
+
+                    #print(f"New chunk: {line[-1]}")
+
+                    to_add = line.strip().replace('\n', '')
+                    #print(f"New line found: {to_add.decode()}")
+
+                    truncated_seq += to_add
+                else:
+                    print("> found.")
+                    first_line = line
+                    id = line.split("|")[1].strip().replace('EPI_ISL_', '')
+
+        decoded_truncated_seq = truncated_seq[20000:]
+
+        return first_line, decoded_truncated_seq, id
+
+    def writeFasta(self, id, first_line, sequence):
+        fasta_folder = os.path.join(os.path.dirname(__file__), f"fastas")
+        if not os.path.exists(fasta_folder):
+            os.mkdir(fasta_folder)
+
+        with open(os.path.join(fasta_folder, f"{id}.fasta"), "w") as output_file:
+            output_file.write(first_line)
+            output_file.write(sequence)
+
+    def useDashing(self):
+
+        #grant execution permissions
+        st = os.stat('dashingShell.sh')
+        os.chmod('dashingShell.sh', st.st_mode | stat.S_IEXEC)
+
+        st = os.stat('dashing_s512')
+        os.chmod('dashing_s512', st.st_mode | stat.S_IEXEC)
+
+        st = os.stat('readHLLandWrite.sh')
+        os.chmod('readHLLandWrite.sh', st.st_mode | stat.S_IEXEC)
+
+        subprocess.call(['sh', "dashingShell.sh"])
+
+#endregion
+
+#region functions outside the class
+
 def getRequiredFiles():
     files = [
-        "https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/dashing_s512",
-        "https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/dashingShell.sh",
-        "https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/dashingShell.sh",
-        "https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/dashing_s512",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/dashingShell.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/readHllandWrite.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/selected%20features.txt",
         ]
     for file in files:
-        download(file, os.path.dirname(__file__))
+        print(file.split("/")[-1].replace("%20", " "))
+        if file.split("/")[-1].replace("%20", " ") not in os.listdir(os.path.dirname(__file__)):
+            download(file, os.path.dirname(__file__))
     
 def download(url, dest_folder):
     if not os.path.exists(dest_folder):
@@ -154,14 +239,15 @@ def download(url, dest_folder):
                     os.fsync(f.fileno())
     else:  # HTTP status code 4XX/5XX
         print("Download failed: status code {}\n{}".format(r.status_code, r.text))
-
+#endregion
 
 
 if __name__ == "__main__":
     download_files = input("Would you like to download the required files? (Type Yes or No.) ")
     
     if(download_files.strip() in ["y", "yes", "YES", "Yes"]):
-        getRequiredFiles()
+        #getRequiredFiles()
+        pass
 
     app = ClientTkinterUiDesignApp()
     app.run()
