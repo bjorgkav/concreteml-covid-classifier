@@ -16,12 +16,19 @@
 
         <h3>Upload successful! Your data has been encrypted.</h3>
 
-        <p>Your data has been encrypted and sent to the server for FHE-enabled classification, and is now ready to be downloaded.</p>
+        <p>Your data has been encrypted and sent to the server for FHE-enabled classification, and is now ready to be downloaded. Proceed to the decryption page for the final step.</p>
 
-        <form accept-charset="UTF-8" action="{% url 'classifier:start_classification' %}" method="POST" enctype="multipart/form-data">
+        <form accept-charset="UTF-8" action="{% url 'client:download_zip' %}" method="POST">
             {% csrf_token %}
             <div>
                 <button type="submit" class="btn btn-primary">Download encrypted predictions</button>
+            </div>
+        </form>
+
+        <form accept-charset="UTF-8" action="{% url 'client:show_decrypt_page' %}" method="POST">
+            {% csrf_token %}
+            <div>
+                <button type="submit" class="btn btn-primary">Proceed to decryption</button>
             </div>
         </form>
 
@@ -30,7 +37,7 @@
         <h3>Your generated keys and encrypted file binaries:</h3>
         <ul>
             {% for key, value in dict.items %}
-            <li>{{key}}: {{value}}</li>
+            <li>{{key}}: {{value| truncatechars:"33"}}</li>
             {% endfor %}
         </ul>
     </div> 

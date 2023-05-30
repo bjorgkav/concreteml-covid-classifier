@@ -165,8 +165,24 @@ def encrypt_data(request, fhemodel_client):
     for row in range(0, arr_no_id.shape[0]):
         #clear_input = arr[:,1:]
         clear_input = arr_no_id[[row],:]
-        print(clear_input)
+        #print(clear_input)
         encrypted_input = fhemodel_client.quantize_encrypt_serialize(clear_input)
         encrypted_rows.append(encrypted_input)
     
     return encrypted_rows
+
+def show_decrypt_page(request):
+    
+    return render(request, "decryption.html")
+
+def process_decrypt(request):
+    pass
+
+def download_zip(request):
+    file_path = os.path.join(BASE_DIR, "classifier/predictions/enc_predictions.zip")
+    zip_filename="enc_predictions.zip"
+
+    response = FileResponse(open(file_path, "rb"), content_type = "application/x-zip-compressed")
+    response['Content-Disposition'] = f'attachment; filename={zip_filename}'
+
+    return response

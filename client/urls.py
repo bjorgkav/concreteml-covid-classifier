@@ -10,5 +10,7 @@ urlpatterns = [
     path('process_dashing', views.process_dashing, name='process_dashing'),
     path('process_encrypt', views.process_encrypt, name='process_encrypt'),
     path('send_client_specs', views.send_client_specs, name='send_client_specs'),
-    #path('start_classification', views.start_classification, name='start_classification'),
+    path('download_zip', views.download_zip, name="download_zip"),
+    path('show_decrypt_page', views.show_decrypt_page, name='show_decrypt_page'),
+    path('process_decrypt', views.process_decrypt, name='process_decrypt'),
 ]

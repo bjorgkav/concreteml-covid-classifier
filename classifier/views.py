@@ -1,9 +1,6 @@
 import shutil
 from django.http import FileResponse
 from django.shortcuts import render, HttpResponse, HttpResponseRedirect
-
-from .models import Submission
-from .forms import SubmissionForm
 from concreteClassifierApp.settings import BASE_DIR
 import os
 import io, zipfile, requests
@@ -14,9 +11,7 @@ from concrete.ml.deployment import FHEModelServer
 
 # Create your views here.
 def index(request):
-    form = SubmissionForm()
-    context = {'form':form}
-    return render(request, 'client/index.html', context=context)
+    return render(request, 'client/index.html', context={})
 
 def show_input(request):
     if request.method == 'POST':
@@ -103,6 +98,8 @@ def drop_columns(file, features_txt = os.path.join(BASE_DIR, "selected features.
 
 def start_classification(encrypted_data):
 
+    clean_predictions_folder()
+
     count = 0
     model_path =os.path.join(BASE_DIR, "Compiled Model") 
     keys_path = os.path.join(BASE_DIR, "classifier/keys")
@@ -155,4 +152,9 @@ def create_zip(file_list):
 
     # return resp
 
+def clean_predictions_folder():
+    pred_dir = os.path.join(BASE_DIR, f"classifier/predictions")
 
+    if(os.listdir(pred_dir)):
+        for f in os.listdir(pred_dir):
+            os.remove(os.path.join(pred_dir, f))

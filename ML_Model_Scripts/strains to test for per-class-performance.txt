@@ -1,0 +1,7 @@
+Strains to test for performance
+
+Accession ID	Lineage
+10020460	B.1.617.2
+10072008	C.37
+10080386	B.1.621
+8210476		B.1.1.529
