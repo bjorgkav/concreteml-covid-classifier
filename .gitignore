@@ -11,3 +11,4 @@ lib/
 lib64/
 include/
 share/
+/lib64
