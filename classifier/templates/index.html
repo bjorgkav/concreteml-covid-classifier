@@ -13,6 +13,17 @@
     <div class="col-md-6 offset-md-3 mt-5">
         <h1>FHE-enabled SARS-CoV-2 Sequence Classifier (Server-Side)</h1>
         <p>Powered by Concrete-ML</p>
+
+        <p>Submit your encrypted inputs and evaluation keys to the classifier to have your encrypted sequences classified between the following variants:</p>
+
+        <ul>
+            {% for key, value in classes_list.items %}
+                <li> {{ value }} </li>
+            {% endfor %}
+        </ul>
+
+        <p>Note that your prediction output will be a downloadable .ZIP file containing the .enc prediction files for each of your submitted strains.</p>
+
         <form accept-charset="UTF-8" action="{% url 'classifier:start_classification' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group mt-3">

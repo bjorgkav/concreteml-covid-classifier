@@ -243,7 +243,8 @@ class ClientTkinterUiDesignApp:
         
         self.encrypted_rows = encrypted_rows
         
-        print(encrypted_rows[0][:16])
+        for row in encrypted_rows:
+            print("Row:\n", row[:10])
 
         self.encrypt_output.configure(state="normal")
         self.encrypt_output.delete("1.0", END) #tk.END
@@ -272,6 +273,7 @@ class ClientTkinterUiDesignApp:
         with open(os.path.join(os.path.dirname(__file__), filename), "wb") as enc_file:
             for line in self.encrypted_rows:
                 enc_file.write(line)
+                enc_file.write(b"\n\n\n\n\n")
         
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
