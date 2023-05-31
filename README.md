@@ -3,7 +3,7 @@ Repository for an FHE-powered viral strain classification tool and web applicati
 
 ## Instructions
 - After cloning the project and running the commands to install the required packages, run the Django development server
-- Open the client-side GUI app and input the appropriate files. Upload the output of the encryption process and the evaluation keys to the server-side application.
+- Open the client-side GUI app and submit the appropriate files. Upload the output of the encryption process and the evaluation keys to the server-side application.
 - Input the prediction output into the final file input field and run the decryption process.
 
 ## Tips
