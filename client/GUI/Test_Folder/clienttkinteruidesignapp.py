@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import shutil
 import subprocess
+import zipfile
 from customtkinter import (
     CTk,
     CTkButton,
@@ -20,6 +21,7 @@ from tkinter import END
 
 from concrete.ml.deployment import FHEModelClient
 import os, requests, stat, pathlib
+import numpy
 from pandas import DataFrame as pd
 from pandas import read_csv
 from numpy import save
@@ -173,7 +175,7 @@ class ClientTkinterUiDesignApp:
         self.decrypt_browse = CTkButton(self.decrypt_frame, hover=True, command=self.getDecryptInput)
         self.decrypt_browse.configure(hover_color="#299cd9", text='Browse...')
         self.decrypt_browse.grid(column=2, padx=10, row=1)
-        self.decrypt_begin = CTkButton(self.decrypt_frame)
+        self.decrypt_begin = CTkButton(self.decrypt_frame, command=self.beginDecryption)
         self.decrypt_begin.configure(
             hover_color="#299cd9",
             text='Decrypt file',
@@ -333,6 +335,38 @@ class ClientTkinterUiDesignApp:
 
         subprocess.call(['sh', "dashingShell.sh"])
 
+    def beginDecryption(self):
+        decrypted_predictions = []
+        classes_dict = {0: 'B.1.1.529 (Omicron)', 1: 'B.1.617.2 (Delta)', 2: 'B.1.621 (Mu)', 3: 'C.37 (Lambda)'}
+        pred_folder = os.path.join(os.path.dirname(__file__), "predictions")
+
+        zip_name = os.path.join(pred_folder, "enc_predictions.zip") if os.listdir(pred_folder) else os.path.join(os.path.dirname(__file__), "enc_predictions.zip")
+
+        with zipfile.ZipFile(zip_name, "r") as zObject:
+            zObject.extractall(path=pred_folder)
+        
+        enc_file_list = [filename for filename in os.listdir(pred_folder) if filename.endswith(".enc")]
+
+        for filename in enc_file_list:
+            print(filename)
+            with open(os.path.join(pred_folder, filename), "rb") as f:
+                decrypted_prediction = self.fhe_model_client.deserialize_decrypt_dequantize(f.read())[0]
+                decrypted_predictions.append(decrypted_prediction)
+        
+        decrypted_predictions_classes = numpy.array(decrypted_predictions).argmax(axis=1)
+        final_output = [classes_dict[output] for output in decrypted_predictions_classes]
+        print(final_output)
+
+
+        # zip_file_list = {filename: opened_zip.read(filename) for filename in opened_zip.namelist() if filename.endswith(".enc")}
+        #     for key in zip_file_list.keys():
+        #         with open(f"{zip_file_list[key]}", "rb") as f:
+        #             decrypted_prediction = self.fhe_model_client.deserialize_decrypt_dequantize(f.read())[0]
+        #             decrypted_predictions.append(decrypted_prediction)
+        # decrypted_predictions_classes = numpy.array(decrypted_predictions).argmax(axis=1)
+        # final_output = [classes_dict[output] for output in decrypted_predictions_classes]
+        # print(final_output)
+        
 #endregion
 
 #region functions outside the class

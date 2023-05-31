@@ -1,2 +1,0 @@
-sed -i -e 's/\r$//' dashingShell.sh
-sed -i -e 's/\r$//' readHllandWrite.sh
