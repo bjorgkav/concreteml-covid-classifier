@@ -12,7 +12,6 @@ Repository for an FHE-powered viral strain classification tool and web applicati
 - If you can't fix your filenames without risking breaking several applications, it's recommended to finish training, compilation, and saving of your Concrete-ML model on the other platforms for using Concrete-ML (Google Colab, Kaggle, Docker container).
 
 - In my experience, saved models only worked with the version of Concrete-ML it was compiled and saved on. If your models and Concrete-ML versions don't match, compile and save a newer version of your model.
-- 
 - This project does not contain a virtual environment or the libraries required to make the project run (yet). Make your own and install the packages mentioned in requirements.txt to get things going.
 - This project DOES contain the Django files for the server-side app. Use those.
 - The desktop client app is going to be implemented using tkinter, customtkinter, and the pygubu suite (pygubu, pygubu-designer)
