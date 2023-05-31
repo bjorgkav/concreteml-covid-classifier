@@ -3,10 +3,11 @@
   <object class="customtkinter.CTk" id="root" named="True">
     <property name="appearance_mode">dark</property>
     <property name="color_theme">dark-blue</property>
-    <property name="geometry">800x550</property>
+    <property name="geometry">800x900</property>
     <property name="padx">60</property>
     <property name="pady">10</property>
     <property name="resizable">both</property>
+    <property name="title" translatable="yes">concrete-covid-classifier</property>
     <child>
       <object class="customtkinter.CTkLabel" id="title" named="True">
         <property name="bg_color">#035690</property>
@@ -182,6 +183,100 @@ On startup, this app automatically downloads the required files and scripts for 
               <property name="columnspan">3</property>
               <property name="pady">10</property>
               <property name="row">2</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="customtkinter.CTkTextbox" id="encrypt_output" named="True">
+            <property name="height">75</property>
+            <property name="state">disabled</property>
+            <property name="text" translatable="yes">Your encryption output will be displayed here.</property>
+            <property name="width">600</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="columnspan">3</property>
+              <property name="pady">10</property>
+              <property name="row">3</property>
+              <property name="sticky">s</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="customtkinter.CTkFrame" id="decrypt_frame" named="True">
+        <layout manager="pack">
+          <property name="anchor">w</property>
+          <property name="fill">x</property>
+          <property name="padx">20</property>
+          <property name="pady">10</property>
+          <property name="side">top</property>
+        </layout>
+        <child>
+          <object class="customtkinter.CTkLabel" id="decrypt_label" named="True">
+            <property name="anchor">w</property>
+            <property name="justify">left</property>
+            <property name="text" translatable="yes">Enter your dashing output filepath for encryption:</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">10</property>
+              <property name="pady">10</property>
+              <property name="row">0</property>
+              <property name="sticky">nw</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="customtkinter.CTkEntry" id="decrypt_filename" named="True">
+            <property name="exportselection">false</property>
+            <property name="justify">left</property>
+            <property name="state">disabled</property>
+            <property name="takefocus">false</property>
+            <property name="width">460</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="padx">10</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="customtkinter.CTkButton" id="decrypt_browse" named="True">
+            <property name="hover">True</property>
+            <property name="hover_color">#299cd9</property>
+            <property name="text" translatable="yes">Browse...</property>
+            <layout manager="grid">
+              <property name="column">2</property>
+              <property name="padx">10</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="customtkinter.CTkButton" id="decrypt_begin" named="True">
+            <property name="hover_color">#299cd9</property>
+            <property name="text" translatable="yes">Encrypt file</property>
+            <property name="width">300</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="columnspan">3</property>
+              <property name="pady">10</property>
+              <property name="row">2</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="customtkinter.CTkTextbox" id="decrypt_output" named="True">
+            <property name="height">75</property>
+            <property name="state">disabled</property>
+            <property name="text" translatable="yes">Your decryption output will be displayed here.</property>
+            <property name="width">600</property>
+            <layout manager="grid">
+              <property name="column">0</property>
+              <property name="columnspan">3</property>
+              <property name="pady">10</property>
+              <property name="row">3</property>
+              <property name="sticky">s</property>
             </layout>
           </object>
         </child>

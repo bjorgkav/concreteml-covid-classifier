@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import shutil
 import subprocess
 from customtkinter import (
     CTk,
@@ -9,28 +10,43 @@ from customtkinter import (
     CTkLabel,
     IntVar,
     StringVar,
+    CTkTextbox,
     set_appearance_mode,
     set_default_color_theme)
 
 from tkinter import filedialog as fd
 
+from tkinter import END
+
 from concrete.ml.deployment import FHEModelClient
-
-import os, requests, stat
-
+import os, requests, stat, pathlib
 from pandas import DataFrame as pd
 from pandas import read_csv
+from numpy import save
 
 #region class
 class ClientTkinterUiDesignApp:
     def __init__(self, master=None):
+        # initialize FHEModelClient
+        self.fhe_model_client = FHEModelClient(os.path.dirname(__file__), os.path.join(os.path.dirname(__file__), "keys"))
+
+        # create required folders if not exists
+        this_folder = os.path.dirname(__file__)
+
+        required_folder_names = ["fastas", "keys", "predictions"]
+
+        for name in required_folder_names:
+            if not os.path.exists(os.path.join(this_folder, f"{name}")):
+                os.mkdir(os.path.join(this_folder, f"{name}"))
+
         # build ui
         self.root = CTk(None)
         self.root.configure(padx=60, pady=10)
         set_appearance_mode("dark")
         set_default_color_theme("dark-blue")
-        self.root.geometry("800x550")
+        self.root.geometry("800x880")
         self.root.resizable(True, True)
+        self.root.title("concreteml-covid-classifier")
         self.title = CTkLabel(self.root)
         self.title.configure(
             bg_color="#035690",
@@ -99,7 +115,7 @@ class ClientTkinterUiDesignApp:
         self.encrypt_label.configure(
             anchor="w",
             justify="left",
-            text='Enter your dashing output filepath for encryption:')
+            text='Enter your dashing output (.csv file) filepath for encryption:')
         self.encrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
         self.encrypt_name_var = StringVar()
         self.encrypt_filename = CTkEntry(self.encrypt_frame, textvariable=self.encrypt_name_var)
@@ -113,13 +129,69 @@ class ClientTkinterUiDesignApp:
         self.encrypt_browse = CTkButton(self.encrypt_frame, hover=True, command=self.getEncryptInput)
         self.encrypt_browse.configure(hover_color="#299cd9", text='Browse...')
         self.encrypt_browse.grid(column=2, padx=10, row=1)
-        self.encrypt_begin = CTkButton(self.encrypt_frame)
+        self.encrypt_begin = CTkButton(self.encrypt_frame, command=self.beginEncryption)
         self.encrypt_begin.configure(
             hover_color="#299cd9",
             text='Encrypt file',
             width=300)
         self.encrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
+        self.encrypt_output = CTkTextbox(self.encrypt_frame)
+        self.encrypt_output.configure(height=75, state="disabled", width=600)
+        _text_ = 'The first 100 bits of your encryption output will be displayed here.'
+        self.encrypt_output.configure(state="normal")
+        self.encrypt_output.insert("0.0", _text_)
+        self.encrypt_output.configure(state="disabled")
+        self.encrypt_output.grid(
+            column=0,
+            columnspan=3,
+            pady=10,
+            row=3,
+            sticky="s")
         self.encrypt_frame.pack(
+            anchor="w",
+            fill="x",
+            padx=20,
+            pady=10,
+            side="top")
+        
+        self.decrypt_frame = CTkFrame(self.root)
+        self.decrypt_label = CTkLabel(self.decrypt_frame)
+        self.decrypt_label.configure(
+            anchor="w",
+            justify="left",
+            text='Enter your server-side prediction output (.enc or .zip file) filepath for decryption:')
+        self.decrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
+        self.decrypt_name_var = StringVar()
+        self.decrypt_filename = CTkEntry(self.decrypt_frame, textvariable=self.decrypt_name_var)
+        self.decrypt_filename.configure(
+            exportselection=False,
+            justify="left",
+            state="disabled",
+            takefocus=False,
+            width=460)
+        self.decrypt_filename.grid(column=0, padx=10, row=1)
+        self.decrypt_browse = CTkButton(self.decrypt_frame, hover=True, command=self.getDecryptInput)
+        self.decrypt_browse.configure(hover_color="#299cd9", text='Browse...')
+        self.decrypt_browse.grid(column=2, padx=10, row=1)
+        self.decrypt_begin = CTkButton(self.decrypt_frame)
+        self.decrypt_begin.configure(
+            hover_color="#299cd9",
+            text='Decrypt file',
+            width=300)
+        self.decrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
+        self.decrypt_output = CTkTextbox(self.decrypt_frame)
+        self.decrypt_output.configure(height=75, state="disabled", width=600)
+        _text_ = 'Your decryption output will be displayed here.'
+        self.decrypt_output.configure(state="normal")
+        self.decrypt_output.insert("0.0", _text_)
+        self.decrypt_output.configure(state="disabled")
+        self.decrypt_output.grid(
+            column=0,
+            columnspan=3,
+            pady=10,
+            row=3,
+            sticky="s")
+        self.decrypt_frame.pack(
             anchor="w",
             fill="x",
             padx=20,
@@ -140,6 +212,10 @@ class ClientTkinterUiDesignApp:
         encrypt_filename = fd.askopenfilename()
         self.encrypt_name_var.set(encrypt_filename)
 
+    def getDecryptInput(self):
+        decrypt_filename = fd.askopenfilename()
+        self.decrypt_name_var.set(decrypt_filename)
+
     def beginDashing(self):
         filename = self.dashing_name_var.get()
         first_line, sequence, id = self.readTruncateSequence(filename)
@@ -147,6 +223,58 @@ class ClientTkinterUiDesignApp:
         self.useDashing()
         dashing_output = os.path.join(os.path.dirname(__file__), f"output.csv")
         self.dropColumns(dashing_output)
+        self.encrypt_name_var.set(dashing_output)
+
+    def beginEncryption(self):
+
+        self.generateKeys()
+
+        dashing_output = os.path.join(os.path.dirname(__file__), "output.csv")
+        df = read_csv(dashing_output)
+        arr_no_id = df.drop(columns=['Accession ID']).to_numpy(dtype="uint16")
+        encrypted_rows = []
+
+        for row in range(0, arr_no_id.shape[0]):
+            #clear_input = arr[:,1:]
+            clear_input = arr_no_id[[row],:]
+            #print(clear_input)
+            encrypted_input = self.fhe_model_client.quantize_encrypt_serialize(clear_input)
+            encrypted_rows.append(encrypted_input)
+        
+        self.encrypted_rows = encrypted_rows
+        
+        print(encrypted_rows[0][:16])
+
+        self.encrypt_output.configure(state="normal")
+        self.encrypt_output.delete("1.0", END) #tk.END
+        self.encrypt_output.insert("0.0", f"Your encrypted output:\n{encrypted_rows[0][0:16]}")
+        self.encrypt_output.configure(state="disabled")
+
+        self.saveEncryptedOutput()
+
+    def generateKeys(self):
+        model_dir = os.path.dirname(__file__)
+        key_dir = os.path.join(os.path.dirname(__file__), "keys")
+        if(os.listdir(key_dir)):
+            for f in os.listdir(key_dir):
+                shutil.rmtree(os.path.join(key_dir, f))
+
+        fhemodel_client = FHEModelClient(model_dir, key_dir=key_dir)
+
+        # The client first need to create the private and evaluation keys.
+        fhemodel_client.generate_private_and_evaluation_keys()
+
+        # Get the serialized evaluation keys
+        self.serialized_evaluation_keys = fhemodel_client.get_serialized_evaluation_keys()
+
+    def saveEncryptedOutput(self):
+        filename = "encrypted_input.txt"
+        with open(os.path.join(os.path.dirname(__file__), filename), "wb") as enc_file:
+            for line in self.encrypted_rows:
+                enc_file.write(line)
+        
+        with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
+            f.write(self.serialized_evaluation_keys)
 
     def dropColumns(self, file, features_txt = "./selected features.txt"):
         with open(features_txt, "r") as feature_file:
@@ -241,13 +369,11 @@ def download(url, dest_folder):
         print("Download failed: status code {}\n{}".format(r.status_code, r.text))
 #endregion
 
-
 if __name__ == "__main__":
     download_files = input("Would you like to download the required files? (Type Yes or No.) ")
     
     if(download_files.strip() in ["y", "yes", "YES", "Yes"]):
-        #getRequiredFiles()
-        pass
+        getRequiredFiles()
 
     app = ClientTkinterUiDesignApp()
     app.run()

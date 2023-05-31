@@ -12,5 +12,8 @@ Repository for an FHE-powered viral strain classification tool and web applicati
 - This project does not contain a virtual environment or the libraries required to make the project run (yet). Make your own and install the packages mentioned in requirements.txt to get things going.
 - This project DOES contain the Django files for the server-side app. Use those.
 - The desktop client app is going to be implemented using tkinter, customtkinter, and the pygubu suite (pygubu, pygubu-designer)
+  - For allowing GUI apps on WSL, follow this guide (https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps)
+    - install X11 apps
+    - run "export DISPLAY=:0;" in bash
   - All required packages can be installed via pip
   - The pygubu suite is a WYISWYG editor for tk, ttk, and customtkinter.

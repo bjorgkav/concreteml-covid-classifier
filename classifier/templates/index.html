@@ -11,13 +11,17 @@
 </head>
 <body>
     <div class="col-md-6 offset-md-3 mt-5">
-        <h1>FHE-enabled SARS-CoV-2 Sequence Classifier</h1>
+        <h1>FHE-enabled SARS-CoV-2 Sequence Classifier (Server-Side)</h1>
         <p>Powered by Concrete-ML</p>
-        <form accept-charset="UTF-8" action="{% url 'classifier:process_submit' %}" method="POST" enctype="multipart/form-data">
+        <form accept-charset="UTF-8" action="{% url 'classifier:start_classification' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="form-group mt-3">
-                <label class="mr-2">Upload your Sequence:</label>
+                <label class="mr-2">Upload your encrypted inputs:</label>
                 <input type="file" name="file">
+            </div>
+            <div class="form-group mt-3">
+                <label class="mr-2">Upload your evaluation keys (.ekl):</label>
+                <input type="file" name="keys_file">
             </div>
             <!-- {{ form.as_p }} -->
             <hr>
