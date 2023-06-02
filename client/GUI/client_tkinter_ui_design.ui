@@ -73,7 +73,7 @@ On startup, this app automatically downloads the required files and scripts for 
           <object class="customtkinter.CTkLabel" id="dashing_label" named="True">
             <property name="anchor">w</property>
             <property name="justify">left</property>
-            <property name="text" translatable="yes">Enter your fasta or zip filepath for Dashing:</property>
+            <property name="text" translatable="yes">Enter your fasta file filepath for processing:</property>
             <layout manager="grid">
               <property name="column">0</property>
               <property name="padx">10</property>
@@ -113,143 +113,9 @@ On startup, this app automatically downloads the required files and scripts for 
         </child>
         <child>
           <object class="customtkinter.CTkButton" id="dashing_begin" named="True">
-            <property name="command" type="command" cbtype="simple">beginDashing</property>
+            <property name="command" type="command" cbtype="simple">processData</property>
             <property name="hover_color">#299cd9</property>
-            <property name="text" translatable="yes">Begin dashing</property>
-            <property name="width">300</property>
-            <layout manager="grid">
-              <property name="column">0</property>
-              <property name="columnspan">3</property>
-              <property name="pady">10</property>
-              <property name="row">2</property>
-            </layout>
-          </object>
-        </child>
-      </object>
-    </child>
-    <child>
-      <object class="customtkinter.CTkFrame" id="encrypt_frame" named="True">
-        <layout manager="pack">
-          <property name="anchor">w</property>
-          <property name="fill">x</property>
-          <property name="padx">20</property>
-          <property name="pady">10</property>
-          <property name="side">top</property>
-        </layout>
-        <child>
-          <object class="customtkinter.CTkLabel" id="encrypt_label" named="True">
-            <property name="anchor">w</property>
-            <property name="justify">left</property>
-            <property name="text" translatable="yes">Enter your dashing output (.csv file) filepath for encryption:</property>
-            <layout manager="grid">
-              <property name="column">0</property>
-              <property name="padx">10</property>
-              <property name="pady">10</property>
-              <property name="row">0</property>
-              <property name="sticky">nw</property>
-            </layout>
-          </object>
-        </child>
-        <child>
-          <object class="customtkinter.CTkEntry" id="encrypt_filename" named="True">
-            <property name="exportselection">false</property>
-            <property name="justify">left</property>
-            <property name="state">disabled</property>
-            <property name="takefocus">false</property>
-            <property name="textvariable">string:encrypt_name_var</property>
-            <property name="width">460</property>
-            <layout manager="grid">
-              <property name="column">0</property>
-              <property name="padx">10</property>
-              <property name="row">1</property>
-            </layout>
-          </object>
-        </child>
-        <child>
-          <object class="customtkinter.CTkButton" id="encrypt_browse" named="True">
-            <property name="command" type="command" cbtype="simple">getEncryptInput</property>
-            <property name="hover">True</property>
-            <property name="hover_color">#299cd9</property>
-            <property name="text" translatable="yes">Browse...</property>
-            <layout manager="grid">
-              <property name="column">2</property>
-              <property name="padx">10</property>
-              <property name="row">1</property>
-            </layout>
-          </object>
-        </child>
-        <child>
-          <object class="customtkinter.CTkButton" id="encrypt_begin" named="True">
-            <property name="command" type="command" cbtype="simple">beginEncryption</property>
-            <property name="hover_color">#299cd9</property>
-            <property name="text" translatable="yes">Encrypt file</property>
-            <property name="width">300</property>
-            <layout manager="grid">
-              <property name="column">0</property>
-              <property name="columnspan">3</property>
-              <property name="pady">10</property>
-              <property name="row">2</property>
-            </layout>
-          </object>
-        </child>
-      </object>
-    </child>
-    <child>
-      <object class="customtkinter.CTkFrame" id="decrypt_frame" named="True">
-        <layout manager="pack">
-          <property name="anchor">w</property>
-          <property name="fill">x</property>
-          <property name="padx">20</property>
-          <property name="pady">10</property>
-          <property name="side">top</property>
-        </layout>
-        <child>
-          <object class="customtkinter.CTkLabel" id="decrypt_label" named="True">
-            <property name="anchor">w</property>
-            <property name="justify">left</property>
-            <property name="text" translatable="yes">Enter your server-side prediction output (.enc or .zip file) filepath for decryption:</property>
-            <layout manager="grid">
-              <property name="column">0</property>
-              <property name="padx">10</property>
-              <property name="pady">10</property>
-              <property name="row">0</property>
-              <property name="sticky">nw</property>
-            </layout>
-          </object>
-        </child>
-        <child>
-          <object class="customtkinter.CTkEntry" id="decrypt_filename" named="True">
-            <property name="exportselection">false</property>
-            <property name="justify">left</property>
-            <property name="state">disabled</property>
-            <property name="takefocus">false</property>
-            <property name="textvariable">string:decrypt_name_var</property>
-            <property name="width">460</property>
-            <layout manager="grid">
-              <property name="column">0</property>
-              <property name="padx">10</property>
-              <property name="row">1</property>
-            </layout>
-          </object>
-        </child>
-        <child>
-          <object class="customtkinter.CTkButton" id="decrypt_browse" named="True">
-            <property name="command" type="command" cbtype="simple">getDecryptInput</property>
-            <property name="hover">True</property>
-            <property name="hover_color">#299cd9</property>
-            <property name="text" translatable="yes">Browse...</property>
-            <layout manager="grid">
-              <property name="column">2</property>
-              <property name="padx">10</property>
-              <property name="row">1</property>
-            </layout>
-          </object>
-        </child>
-        <child>
-          <object class="customtkinter.CTkButton" id="decrypt_begin" named="True">
-            <property name="command" type="command" cbtype="simple">beginDecryption</property>
-            <property name="hover_color">#299cd9</property>
-            <property name="text" translatable="yes">Decrypt file</property>
+            <property name="text" translatable="yes">Submit for FHE Classificaiton</property>
             <property name="width">300</property>
             <layout manager="grid">
               <property name="column">0</property>

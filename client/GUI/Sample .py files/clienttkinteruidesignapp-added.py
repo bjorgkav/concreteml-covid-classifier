@@ -60,7 +60,7 @@ class ClientTkinterUiDesignApp:
         self.dashing_label.configure(
             anchor="w",
             justify="left",
-            text='Enter your fasta or zip filepath for Dashing:')
+            text='Enter your fasta file filepath for processing:')
         self.dashing_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
         self.dashing_filename = CTkEntry(self.dashing_frame)
         self.dashing_name_var = tk.StringVar()
@@ -79,79 +79,11 @@ class ClientTkinterUiDesignApp:
         self.dashing_begin = CTkButton(self.dashing_frame)
         self.dashing_begin.configure(
             hover_color="#299cd9",
-            text='Begin dashing',
+            text='Submit for FHE Classificaiton',
             width=300)
         self.dashing_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.dashing_begin.configure(command=self.beginDashing)
+        self.dashing_begin.configure(command=self.processData)
         self.dashing_frame.pack(
-            anchor="w",
-            fill="x",
-            padx=20,
-            pady=10,
-            side="top")
-        self.encrypt_frame = CTkFrame(self.root)
-        self.encrypt_label = CTkLabel(self.encrypt_frame)
-        self.encrypt_label.configure(
-            anchor="w",
-            justify="left",
-            text='Enter your dashing output (.csv file) filepath for encryption:')
-        self.encrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
-        self.encrypt_filename = CTkEntry(self.encrypt_frame)
-        self.encrypt_name_var = tk.StringVar()
-        self.encrypt_filename.configure(
-            exportselection=False,
-            justify="left",
-            state="disabled",
-            takefocus=False,
-            textvariable=self.encrypt_name_var,
-            width=460)
-        self.encrypt_filename.grid(column=0, padx=10, row=1)
-        self.encrypt_browse = CTkButton(self.encrypt_frame, hover=True)
-        self.encrypt_browse.configure(hover_color="#299cd9", text='Browse...')
-        self.encrypt_browse.grid(column=2, padx=10, row=1)
-        self.encrypt_browse.configure(command=self.getEncryptInput)
-        self.encrypt_begin = CTkButton(self.encrypt_frame)
-        self.encrypt_begin.configure(
-            hover_color="#299cd9",
-            text='Encrypt file',
-            width=300)
-        self.encrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.encrypt_begin.configure(command=self.beginEncryption)
-        self.encrypt_frame.pack(
-            anchor="w",
-            fill="x",
-            padx=20,
-            pady=10,
-            side="top")
-        self.decrypt_frame = CTkFrame(self.root)
-        self.decrypt_label = CTkLabel(self.decrypt_frame)
-        self.decrypt_label.configure(
-            anchor="w",
-            justify="left",
-            text='Enter your server-side prediction output (.enc or .zip file) filepath for decryption:')
-        self.decrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
-        self.decrypt_filename = CTkEntry(self.decrypt_frame)
-        self.decrypt_name_var = tk.StringVar()
-        self.decrypt_filename.configure(
-            exportselection=False,
-            justify="left",
-            state="disabled",
-            takefocus=False,
-            textvariable=self.decrypt_name_var,
-            width=460)
-        self.decrypt_filename.grid(column=0, padx=10, row=1)
-        self.decrypt_browse = CTkButton(self.decrypt_frame, hover=True)
-        self.decrypt_browse.configure(hover_color="#299cd9", text='Browse...')
-        self.decrypt_browse.grid(column=2, padx=10, row=1)
-        self.decrypt_browse.configure(command=self.getDecryptInput)
-        self.decrypt_begin = CTkButton(self.decrypt_frame)
-        self.decrypt_begin.configure(
-            hover_color="#299cd9",
-            text='Decrypt file',
-            width=300)
-        self.decrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.decrypt_begin.configure(command=self.beginDecryption)
-        self.decrypt_frame.pack(
             anchor="w",
             fill="x",
             padx=20,
@@ -179,19 +111,7 @@ class ClientTkinterUiDesignApp:
     def getDashingInput(self):
         pass
 
-    def beginDashing(self):
-        pass
-
-    def getEncryptInput(self):
-        pass
-
-    def beginEncryption(self):
-        pass
-
-    def getDecryptInput(self):
-        pass
-
-    def beginDecryption(self):
+    def processData(self):
         pass
 
 

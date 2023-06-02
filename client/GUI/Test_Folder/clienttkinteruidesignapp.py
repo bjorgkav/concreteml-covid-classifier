@@ -40,6 +40,7 @@ class ClientTkinterUiDesignApp:
                 os.mkdir(os.path.join(this_folder, f"{name}"))
 
         # build ui
+        # build ui
         self.root = CTk(None)
         self.root.configure(padx=60, pady=10)
         set_appearance_mode("dark")
@@ -48,6 +49,8 @@ class ClientTkinterUiDesignApp:
         self.root.resizable(True, True)
         self.root.title(
             "FHE-Enabled SARS-CoV-2 Classifier System (Client-side)")
+        self.encrypt_name_var = StringVar()
+        self.decrypt_name_var = StringVar()
         self.title = CTkLabel(self.root)
         self.title.configure(
             bg_color="#035690",
@@ -85,7 +88,7 @@ class ClientTkinterUiDesignApp:
         self.dashing_label.configure(
             anchor="w",
             justify="left",
-            text='Enter your fasta or zip filepath for Dashing:')
+            text='Enter your fasta file filepath for processing:')
         self.dashing_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
         self.dashing_filename = CTkEntry(self.dashing_frame)
         self.dashing_name_var = StringVar()
@@ -104,79 +107,11 @@ class ClientTkinterUiDesignApp:
         self.dashing_begin = CTkButton(self.dashing_frame)
         self.dashing_begin.configure(
             hover_color="#299cd9",
-            text='Begin dashing',
+            text='Submit for FHE Classificaiton',
             width=300)
         self.dashing_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.dashing_begin.configure(command=self.beginDashing)
+        self.dashing_begin.configure(command=self.processData)
         self.dashing_frame.pack(
-            anchor="w",
-            fill="x",
-            padx=20,
-            pady=10,
-            side="top")
-        self.encrypt_frame = CTkFrame(self.root)
-        self.encrypt_label = CTkLabel(self.encrypt_frame)
-        self.encrypt_label.configure(
-            anchor="w",
-            justify="left",
-            text='Enter your dashing output (.csv file) filepath for encryption:')
-        self.encrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
-        self.encrypt_filename = CTkEntry(self.encrypt_frame)
-        self.encrypt_name_var = StringVar()
-        self.encrypt_filename.configure(
-            exportselection=False,
-            justify="left",
-            state="disabled",
-            takefocus=False,
-            textvariable=self.encrypt_name_var,
-            width=460)
-        self.encrypt_filename.grid(column=0, padx=10, row=1)
-        self.encrypt_browse = CTkButton(self.encrypt_frame, hover=True)
-        self.encrypt_browse.configure(hover_color="#299cd9", text='Browse...')
-        self.encrypt_browse.grid(column=2, padx=10, row=1)
-        self.encrypt_browse.configure(command=self.getEncryptInput)
-        self.encrypt_begin = CTkButton(self.encrypt_frame)
-        self.encrypt_begin.configure(
-            hover_color="#299cd9",
-            text='Encrypt file',
-            width=300)
-        self.encrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.encrypt_begin.configure(command=self.beginEncryption)
-        self.encrypt_frame.pack(
-            anchor="w",
-            fill="x",
-            padx=20,
-            pady=10,
-            side="top")
-        self.decrypt_frame = CTkFrame(self.root)
-        self.decrypt_label = CTkLabel(self.decrypt_frame)
-        self.decrypt_label.configure(
-            anchor="w",
-            justify="left",
-            text='Enter your server-side prediction output (.enc or .zip file) filepath for decryption:')
-        self.decrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
-        self.decrypt_filename = CTkEntry(self.decrypt_frame)
-        self.decrypt_name_var = StringVar()
-        self.decrypt_filename.configure(
-            exportselection=False,
-            justify="left",
-            state="disabled",
-            takefocus=False,
-            textvariable=self.decrypt_name_var,
-            width=460)
-        self.decrypt_filename.grid(column=0, padx=10, row=1)
-        self.decrypt_browse = CTkButton(self.decrypt_frame, hover=True)
-        self.decrypt_browse.configure(hover_color="#299cd9", text='Browse...')
-        self.decrypt_browse.grid(column=2, padx=10, row=1)
-        self.decrypt_browse.configure(command=self.getDecryptInput)
-        self.decrypt_begin = CTkButton(self.decrypt_frame)
-        self.decrypt_begin.configure(
-            hover_color="#299cd9",
-            text='Decrypt file',
-            width=300)
-        self.decrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.decrypt_begin.configure(command=self.beginDecryption)
-        self.decrypt_frame.pack(
             anchor="w",
             fill="x",
             padx=20,
@@ -211,6 +146,11 @@ class ClientTkinterUiDesignApp:
             self.app_output.insert(INSERT, f"{string}\n\n")
         self.app_output.see(END)
         self.app_output.configure(state="disabled")
+
+    def processData(self):
+        self.beginDashing()
+        self.beginEncryption()
+        self.beginDecryption()
 
     def getDashingInput(self):
         dashing_filename = fd.askopenfilename()
@@ -329,15 +269,15 @@ class ClientTkinterUiDesignApp:
 
             client.get(app_url)
 
-            self.sendEncryptRequestToServer(client=client)
+            predictions_zip_name = self.sendEncryptRequestToServer(client=client)
+
+            self.decrypt_name_var.set(predictions_zip_name)
 
         except Exception as e:
             self.writeOutput(f"Error: {traceback.format_exc()}")
 
     def sendEncryptRequestToServer(self, client):
         """Sends 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' (expected to be located in the same directory as the app) to the server-side app through the Python requests library. URL is currently set to localhost:8000 for development purposes."""
-        
-        self.writeOutput("Sending encrypted inputs and keys to server for classification...")
         
         app_url = "http://localhost:8000"
 
@@ -355,16 +295,22 @@ class ClientTkinterUiDesignApp:
         request_data = dict(csrfmiddlewaretoken=csrftoken)
         request_files = dict(inputs=inputs_file, keys_file=eval_keys_file)
         
+        self.writeOutput("Sending encrypted inputs and keys to server for classification...")
+
+        self.writeOutput("Waiting for server's response...")
 
         #code to send the above files to "localhost:8000/{function_name}"
-        request_output = client.post(f"{app_url}/start_classification", data = request_data, files=request_files, headers=dict(Referer=app_url))
+        request_output = client.post(f"{app_url}/start_classification", data = request_data, files=request_files, headers=dict(Referer=app_url), )
 
-        if("test.zip" in os.listdir(os.path.dirname(__file__))): os.remove(os.path.join(os.path.dirname(__file__), "test.zip"))
+        if request_output.ok:
+            self.writeOutput(f"Response Code: {request_output.status_code}. Classification completed!")
 
-        with open(os.path.join(os.path.dirname(__file__), "predictions/enc_predictions.zip"), "wb") as z:
-            z.write(request_output.content)
+            if("test.zip" in os.listdir(os.path.dirname(__file__))): os.remove(os.path.join(os.path.dirname(__file__), "test.zip"), timeout=(10, 10))
 
-        self.writeOutput("Sending completed!")
+            with open(os.path.join(os.path.dirname(__file__), "predictions/enc_predictions.zip"), "wb") as z:
+                z.write(request_output.content)
+
+        return os.path.join(os.path.dirname(__file__), "predictions/enc_predictions.zip")
 
     def generateKeys(self):
         model_dir = os.path.dirname(__file__)
@@ -524,7 +470,7 @@ def getRequiredFiles():
     files = [
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHllandWrite.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
         #r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/selected%20features.txt",
         ]

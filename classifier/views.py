@@ -23,7 +23,7 @@ def start_classification(request):
     keys_file = request.FILES['keys_file']
     pred_dir = os.path.join(BASE_DIR, "classifier/predictions")
 
-    data = request.FILES['inputs'].read.split(b'\n\n\n\n\n')
+    data = request.FILES['inputs'].read().split(b'\n\n\n\n\n')
     #del request.session['data_dict']
 
     enc_file_list = []
