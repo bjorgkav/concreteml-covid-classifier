@@ -522,9 +522,9 @@ class ClientTkinterUiDesignApp:
 
 def getRequiredFiles():
     files = [
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/dashing_s512",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/dashingShell.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/readHllandWrite.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHllandWrite.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
         #r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/selected%20features.txt",
         ]
