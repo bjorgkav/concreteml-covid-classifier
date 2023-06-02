@@ -338,8 +338,9 @@ class ClientTkinterUiDesignApp:
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
 
-    def dropColumns(self, file):
-        features = ['feature_32', 'feature_65', 'feature_73', 'feature_76', 'feature_126', 'feature_140', 'feature_157', 'feature_183', 'feature_209', 'feature_224', 'feature_283', 'feature_327', 'feature_343', 'feature_346', 'feature_369', 'feature_397', 'feature_413', 'feature_486', 'feature_489', 'feature_493']
+    def dropColumns(self, file = os.path.join(os.path.dirname(__file__), "selected_features.txt")):
+        with open(file, "r") as feature_file:
+            features = [feature for feature in feature_file.readlines()]
 
         feature_list = ["Accession ID"] + features
 
@@ -472,7 +473,7 @@ def getRequiredFiles():
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
-        #r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/selected%20features.txt",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
         ]
     for file in files:
         print(file.split("/")[-1].replace("%20", " "))
