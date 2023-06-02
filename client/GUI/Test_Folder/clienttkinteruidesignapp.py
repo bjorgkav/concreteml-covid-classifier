@@ -338,14 +338,15 @@ class ClientTkinterUiDesignApp:
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
 
-    def dropColumns(self, file = os.path.join(os.path.dirname(__file__), "selected_features.txt")):
+    def dropColumns(self, dashing_output, file = os.path.join(os.path.dirname(__file__), "selected_features.txt")):
         with open(file, "r") as feature_file:
-            features = [feature for feature in feature_file.readlines()]
+            features = [feature.strip() for feature in feature_file.readlines()]
+        #print("Selected features:", features)
 
         feature_list = ["Accession ID"] + features
 
-        drop_df = read_csv(file)
-        drop_df = drop_df[[column for column in feature_list]]  
+        drop_df = read_csv(dashing_output)
+        drop_df = drop_df[[column.strip() for column in feature_list]]  
         drop_df.to_csv("./output.csv", index=False, header=True)
 
     def readTruncateSequence(self, fasta_fpath):
