@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-import shutil
-import subprocess
-import zipfile
+import shutil, subprocess, zipfile, requests
 from customtkinter import (
     CTk,
     CTkButton,
@@ -17,11 +15,10 @@ from customtkinter import (
 
 from tkinter import filedialog as fd
 
-from tkinter import END
+from tkinter import END, INSERT
 
 from concrete.ml.deployment import FHEModelClient
-import os, requests, stat, pathlib
-import numpy
+import os, requests, stat, pathlib, numpy, traceback, urllib
 from pandas import DataFrame as pd
 from pandas import read_csv
 from numpy import save
@@ -29,8 +26,9 @@ from numpy import save
 #region class
 class ClientTkinterUiDesignApp:
     def __init__(self, master=None):
-        # initialize FHEModelClient
+        # initialize FHEModelClient and output dictionary
         self.fhe_model_client = FHEModelClient(os.path.dirname(__file__), os.path.join(os.path.dirname(__file__), "keys"))
+        self.data_dictionary = {}
 
         # create required folders if not exists
         this_folder = os.path.dirname(__file__)
@@ -46,9 +44,10 @@ class ClientTkinterUiDesignApp:
         self.root.configure(padx=60, pady=10)
         set_appearance_mode("dark")
         set_default_color_theme("dark-blue")
-        self.root.geometry("800x880")
+        self.root.geometry("800x900")
         self.root.resizable(True, True)
-        self.root.title("concreteml-covid-classifier")
+        self.root.title(
+            "FHE-Enabled SARS-CoV-2 Classifier System (Client-side)")
         self.title = CTkLabel(self.root)
         self.title.configure(
             bg_color="#035690",
@@ -88,24 +87,27 @@ class ClientTkinterUiDesignApp:
             justify="left",
             text='Enter your fasta or zip filepath for Dashing:')
         self.dashing_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
+        self.dashing_filename = CTkEntry(self.dashing_frame)
         self.dashing_name_var = StringVar()
-        self.dashing_filename = CTkEntry(self.dashing_frame, textvariable=self.dashing_name_var)
         self.dashing_filename.configure(
             exportselection=False,
             justify="left",
             state="disabled",
             takefocus=False,
+            textvariable=self.dashing_name_var,
             width=460)
         self.dashing_filename.grid(column=0, padx=10, row=1)
         self.dashing_browse = CTkButton(self.dashing_frame, hover=True)
-        self.dashing_browse.configure(hover_color="#299cd9", text='Browse...', command=self.getDashingInput)
+        self.dashing_browse.configure(hover_color="#299cd9", text='Browse...')
         self.dashing_browse.grid(column=2, padx=10, row=1)
-        self.dashing_begin = CTkButton(self.dashing_frame, command=self.beginDashing)
+        self.dashing_browse.configure(command=self.getDashingInput)
+        self.dashing_begin = CTkButton(self.dashing_frame)
         self.dashing_begin.configure(
             hover_color="#299cd9",
             text='Begin dashing',
             width=300)
         self.dashing_begin.grid(column=0, columnspan=3, pady=10, row=2)
+        self.dashing_begin.configure(command=self.beginDashing)
         self.dashing_frame.pack(
             anchor="w",
             fill="x",
@@ -119,43 +121,33 @@ class ClientTkinterUiDesignApp:
             justify="left",
             text='Enter your dashing output (.csv file) filepath for encryption:')
         self.encrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
+        self.encrypt_filename = CTkEntry(self.encrypt_frame)
         self.encrypt_name_var = StringVar()
-        self.encrypt_filename = CTkEntry(self.encrypt_frame, textvariable=self.encrypt_name_var)
         self.encrypt_filename.configure(
             exportselection=False,
             justify="left",
             state="disabled",
             takefocus=False,
+            textvariable=self.encrypt_name_var,
             width=460)
         self.encrypt_filename.grid(column=0, padx=10, row=1)
-        self.encrypt_browse = CTkButton(self.encrypt_frame, hover=True, command=self.getEncryptInput)
+        self.encrypt_browse = CTkButton(self.encrypt_frame, hover=True)
         self.encrypt_browse.configure(hover_color="#299cd9", text='Browse...')
         self.encrypt_browse.grid(column=2, padx=10, row=1)
-        self.encrypt_begin = CTkButton(self.encrypt_frame, command=self.beginEncryption)
+        self.encrypt_browse.configure(command=self.getEncryptInput)
+        self.encrypt_begin = CTkButton(self.encrypt_frame)
         self.encrypt_begin.configure(
             hover_color="#299cd9",
             text='Encrypt file',
             width=300)
         self.encrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.encrypt_output = CTkTextbox(self.encrypt_frame)
-        self.encrypt_output.configure(height=75, state="disabled", width=600)
-        _text_ = 'The first 100 bits of your encryption output will be displayed here.'
-        self.encrypt_output.configure(state="normal")
-        self.encrypt_output.insert("0.0", _text_)
-        self.encrypt_output.configure(state="disabled")
-        self.encrypt_output.grid(
-            column=0,
-            columnspan=3,
-            pady=10,
-            row=3,
-            sticky="s")
+        self.encrypt_begin.configure(command=self.beginEncryption)
         self.encrypt_frame.pack(
             anchor="w",
             fill="x",
             padx=20,
             pady=10,
             side="top")
-        
         self.decrypt_frame = CTkFrame(self.root)
         self.decrypt_label = CTkLabel(self.decrypt_frame)
         self.decrypt_label.configure(
@@ -163,48 +155,62 @@ class ClientTkinterUiDesignApp:
             justify="left",
             text='Enter your server-side prediction output (.enc or .zip file) filepath for decryption:')
         self.decrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
+        self.decrypt_filename = CTkEntry(self.decrypt_frame)
         self.decrypt_name_var = StringVar()
-        self.decrypt_filename = CTkEntry(self.decrypt_frame, textvariable=self.decrypt_name_var)
         self.decrypt_filename.configure(
             exportselection=False,
             justify="left",
             state="disabled",
             takefocus=False,
+            textvariable=self.decrypt_name_var,
             width=460)
         self.decrypt_filename.grid(column=0, padx=10, row=1)
-        self.decrypt_browse = CTkButton(self.decrypt_frame, hover=True, command=self.getDecryptInput)
+        self.decrypt_browse = CTkButton(self.decrypt_frame, hover=True)
         self.decrypt_browse.configure(hover_color="#299cd9", text='Browse...')
         self.decrypt_browse.grid(column=2, padx=10, row=1)
-        self.decrypt_begin = CTkButton(self.decrypt_frame, command=self.beginDecryption)
+        self.decrypt_browse.configure(command=self.getDecryptInput)
+        self.decrypt_begin = CTkButton(self.decrypt_frame)
         self.decrypt_begin.configure(
             hover_color="#299cd9",
             text='Decrypt file',
             width=300)
         self.decrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.decrypt_output = CTkTextbox(self.decrypt_frame)
-        self.decrypt_output.configure(height=75, state="disabled", width=600)
-        _text_ = 'Your decryption output will be displayed here.'
-        self.decrypt_output.configure(state="normal")
-        self.decrypt_output.insert("0.0", _text_)
-        self.decrypt_output.configure(state="disabled")
-        self.decrypt_output.grid(
-            column=0,
-            columnspan=3,
-            pady=10,
-            row=3,
-            sticky="s")
+        self.decrypt_begin.configure(command=self.beginDecryption)
         self.decrypt_frame.pack(
             anchor="w",
             fill="x",
             padx=20,
             pady=10,
             side="top")
+        ctkframe2 = CTkFrame(self.root)
+        self.app_output_label = CTkLabel(ctkframe2)
+        self.app_output_label.configure(text='Output Window')
+        self.app_output_label.pack(side="top")
+        self.app_output = CTkTextbox(ctkframe2)
+        self.app_output.configure(height=75, state="disabled")
+        _text_ = 'App activity will be displayed here.'
+        self.app_output.configure(state="normal")
+        self.app_output.insert("0.0", _text_)
+        self.app_output.configure(state="disabled")
+        self.app_output.pack(expand=True, fill="both", padx=10, pady=10)
+        ctkframe2.pack(expand=True, fill="both", padx=20, pady=10, side="top")
 
         # Main widget
         self.mainwindow = self.root
 
     def run(self):
         self.mainwindow.mainloop()
+
+    def writeOutput(self, string, delete_switch = False):
+        """Function for writing argument 'string' to the app's output window. Set argument 'delete_switch' to True to clear the window before printing."""
+        self.app_output.configure(state="normal")
+        if(delete_switch):
+            self.app_output.delete("1.0", END) #tk.END
+            self.app_output.insert("0.0", f"{string}\n\n")
+        else:
+            self.app_output.insert(INSERT, f"{string}\n\n")
+        self.app_output.see(END)
+        self.app_output.configure(state="disabled")
 
     def getDashingInput(self):
         dashing_filename = fd.askopenfilename()
@@ -219,45 +225,151 @@ class ClientTkinterUiDesignApp:
         self.decrypt_name_var.set(decrypt_filename)
 
     def beginDashing(self):
-        filename = self.dashing_name_var.get()
-        first_line, sequence, id = self.readTruncateSequence(filename)
-        self.writeFasta(id, first_line, sequence)
-        self.useDashing()
-        dashing_output = os.path.join(os.path.dirname(__file__), f"output.csv")
-        self.dropColumns(dashing_output)
-        self.encrypt_name_var.set(dashing_output)
+        """Function to begin dashing the user's input. Expects the 'self.dashing_name_var' to point to a .fasta file or zip file. Outputs a CSV file for encryption."""
+        try:
+            if(os.listdir(os.path.join(os.path.dirname(__file__), "fastas"))):
+                for f in os.listdir(os.path.join(os.path.dirname(__file__), "fastas")):
+                    os.remove(os.path.join(os.path.join(os.path.dirname(__file__), "fastas"), f))
+
+            self.writeOutput("Beginning Dashing...", True)
+        
+            filename = self.dashing_name_var.get()
+
+            if filename.endswith(".zip"):
+                # with zipfile.ZipFile(filename, "r") as zObject:
+                #     for file in zObject.namelist():
+                #         opened_file = zObject.open(file, "r")
+                #         first_line, sequence, id = self.readTruncateZipSequence(opened_file.readlines())
+                #         self.writeFastaBytes(id, first_line, sequence)
+                    
+                #     self.useDashing()
+
+                #     self.writeOutput("Writing dashed sequences to output.csv in the current directory...")
+
+                #     dashing_output = os.path.join(os.path.dirname(__file__), f"output.csv")
+                #     self.dropColumns(dashing_output)
+                #     self.encrypt_name_var.set(dashing_output)
+
+                #     self.writeOutput("Dashing Completed!")
+                raise Exception("ZIP file inputs for this application are still in development.")
+
+            elif filename.endswith(".fasta"):
+                first_line, sequence, id = self.readTruncateSequence(filename)
+                self.writeFasta(id, first_line, sequence)
+                self.useDashing()
+
+                self.writeOutput("Writing dashed sequences to output.csv in the current directory...")
+
+                dashing_output = os.path.join(os.path.dirname(__file__), f"output.csv")
+                self.dropColumns(dashing_output)
+                self.encrypt_name_var.set(dashing_output)
+
+                self.writeOutput("Dashing Completed!")
+            else:
+                raise Exception("Invalid file type: supported file types include .fasta, .zip")
+        except Exception as e:
+            #self.writeOutput(f"Error: {str(e)}")
+            self.writeOutput(traceback.format_exc())
 
     def beginEncryption(self):
+        """Function to begin the encryption of the user's dashed SARS-CoV-2 sequences. Expects 'self.encrypt_name_var' to point to the CSV file containing dashed sequences. Outputs a text file and .ekl file for the encrypted inputs and serialized evaluation keys respectively in this app's directory."""
+        try:
 
-        self.generateKeys()
+            for f in os.listdir(os.path.dirname(__file__)):
+                if f.split("/")[-1] in ["encrypted_input.txt", "serialized_evaluation_keys.ekl"]:
+                    os.remove(f)
 
-        dashing_output = os.path.join(os.path.dirname(__file__), "output.csv")
-        df = read_csv(dashing_output)
-        arr_no_id = df.drop(columns=['Accession ID']).to_numpy(dtype="uint16")
-        encrypted_rows = []
+            if(not self.encrypt_name_var.get().endswith(".csv")):
+                raise Exception("Invalid file type. Only .csv files are supported.")
 
-        for row in range(0, arr_no_id.shape[0]):
-            #clear_input = arr[:,1:]
-            clear_input = arr_no_id[[row],:]
-            #print(clear_input)
-            encrypted_input = self.fhe_model_client.quantize_encrypt_serialize(clear_input)
-            encrypted_rows.append(encrypted_input)
+            self.writeOutput("Generating Keys...", True)
+
+            self.generateKeys()
+
+            self.writeOutput("Key generation complete! Key files written to folder inside 'keys' directory.")
+
+            self.writeOutput("Beginning encryption...")
+            #dashing_output = os.path.join(os.path.dirname(__file__), "output.csv")
+            dashing_output = self.encrypt_name_var.get()
+            df = read_csv(dashing_output)
+            arr_no_id = df.drop(columns=['Accession ID']).to_numpy(dtype="uint16")
+
+            #encrypted rows for input to server
+            encrypted_rows = []
+
+            #encrypted dictionary for outputs
+            count = 0
+            for id in df['Accession ID']:
+                self.data_dictionary[count] = {'id':id, 'result':''} 
+
+            #print(self.data_dictionary)
+
+            for row in range(0, arr_no_id.shape[0]):
+                #clear_input = arr[:,1:]
+                clear_input = arr_no_id[[row],:]
+                #print(clear_input)
+                encrypted_input = self.fhe_model_client.quantize_encrypt_serialize(clear_input)
+                self.writeOutput(f"New row encrypted of {type(encrypted_input)}; adding to list of encrypted values...")
+                encrypted_rows.append(encrypted_input)
+            
+            self.encrypted_rows = encrypted_rows
+            
+            for row in encrypted_rows:
+                print("Row: ", row[:10])
+
+            self.writeOutput(f"Encryption complete! The first 15 character of your encrypted output:\n{encrypted_rows[0][0:16]}")
+
+            self.saveEncryptedOutput()
+
+            self.writeOutput("Encrypted inputs and key files saved to 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl'. Please do not move these files until after prediction.")
+
+            app_url = "http://localhost:8000"
+
+            client = requests.session()
+
+            client.get(app_url)
+
+            self.sendEncryptRequestToServer(client=client)
+
+        except Exception as e:
+            self.writeOutput(f"Error: {traceback.format_exc()}")
+
+    def sendEncryptRequestToServer(self, client):
+        """Sends 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' (expected to be located in the same directory as the app) to the server-side app through the Python requests library. URL is currently set to localhost:8000 for development purposes."""
         
-        self.encrypted_rows = encrypted_rows
+        self.writeOutput("Sending encrypted inputs and keys to server for classification...")
         
-        for row in encrypted_rows:
-            print("Row:\n", row[:10])
+        app_url = "http://localhost:8000"
 
-        self.encrypt_output.configure(state="normal")
-        self.encrypt_output.delete("1.0", END) #tk.END
-        self.encrypt_output.insert("0.0", f"Your encrypted output:\n{encrypted_rows[0][0:16]}")
-        self.encrypt_output.configure(state="disabled")
+        if 'csrftoken' in client.cookies:
+            # Django 1.6 and up
+            csrftoken = client.cookies['csrftoken']
+        else:
+            # older versions
+            csrftoken = client.cookies['csrf']
 
-        self.saveEncryptedOutput()
+        #self.writeOutput(f"{type(self.encrypted_rows)}")
+
+        eval_keys_file = open('serialized_evaluation_keys.ekl', "rb")
+        inputs_file = open("encrypted_input.txt", "rb")
+        request_data = dict(csrfmiddlewaretoken=csrftoken)
+        request_files = dict(inputs=inputs_file, keys_file=eval_keys_file)
+        
+
+        #code to send the above files to "localhost:8000/{function_name}"
+        request_output = client.post(f"{app_url}/start_classification", data = request_data, files=request_files, headers=dict(Referer=app_url))
+
+        if("test.zip" in os.listdir(os.path.dirname(__file__))): os.remove(os.path.join(os.path.dirname(__file__), "test.zip"))
+
+        with open(os.path.join(os.path.dirname(__file__), "predictions/enc_predictions.zip"), "wb") as z:
+            z.write(request_output.content)
+
+        self.writeOutput("Sending completed!")
 
     def generateKeys(self):
         model_dir = os.path.dirname(__file__)
         key_dir = os.path.join(os.path.dirname(__file__), "keys")
+
         if(os.listdir(key_dir)):
             for f in os.listdir(key_dir):
                 shutil.rmtree(os.path.join(key_dir, f))
@@ -275,20 +387,19 @@ class ClientTkinterUiDesignApp:
         with open(os.path.join(os.path.dirname(__file__), filename), "wb") as enc_file:
             for line in self.encrypted_rows:
                 enc_file.write(line)
-                enc_file.write(b"\n\n\n\n\n")
+                #enc_file.write(b'\n\n\n\n\n')
         
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
 
-    def dropColumns(self, file, features_txt = "./selected features.txt"):
-        with open(features_txt, "r") as feature_file:
-            temp_list = list(f for f in feature_file.read().splitlines())
+    def dropColumns(self, file):
+        features = ['feature_32', 'feature_65', 'feature_73', 'feature_76', 'feature_126', 'feature_140', 'feature_157', 'feature_183', 'feature_209', 'feature_224', 'feature_283', 'feature_327', 'feature_343', 'feature_346', 'feature_369', 'feature_397', 'feature_413', 'feature_486', 'feature_489', 'feature_493']
 
-            feature_list = ["Accession ID"] + temp_list
+        feature_list = ["Accession ID"] + features
 
-            drop_df = read_csv(file)
-            drop_df = drop_df[[column for column in feature_list]] 
-            drop_df.to_csv("./output.csv", index=False, header=True)
+        drop_df = read_csv(file)
+        drop_df = drop_df[[column for column in feature_list]]  
+        drop_df.to_csv("./output.csv", index=False, header=True)
 
     def readTruncateSequence(self, fasta_fpath):
         truncated_seq = ""
@@ -311,8 +422,39 @@ class ClientTkinterUiDesignApp:
         decoded_truncated_seq = truncated_seq[20000:]
 
         return first_line, decoded_truncated_seq, id
+    
+    def readTruncateZipSequence(self, fasta_readlines):
+        truncated_seq = b""
+        for line in fasta_readlines: #chunks() method is essentially opening the file in binary mode.
+            if b">" not in line:
+
+                #print(f"New chunk: {line[-1]}")
+
+                to_add = line.decode().strip().replace('\n', '').encode()
+                #print(f"New line found: {to_add.decode()}")
+
+                truncated_seq += to_add
+            else:
+                print("> found.")
+                first_line = line
+                id = line.split(b"|")[1].strip().replace(b'EPI_ISL_', b'').decode()
+
+        decoded_truncated_seq = truncated_seq[20000:]
+
+        return first_line, decoded_truncated_seq, id
+
+    def writeFastaBytes(self, id, first_line, sequence):
+        """Writes a .fasta BYTES file in the 'fastas' folder named after the fasta's ID and containing the truncated sequence."""
+        fasta_folder = os.path.join(os.path.dirname(__file__), f"fastas")
+        if not os.path.exists(fasta_folder):
+            os.mkdir(fasta_folder)
+
+        with open(os.path.join(fasta_folder, f"{id}.fasta"), "wb") as output_file:
+            output_file.write(first_line)
+            output_file.write(sequence)
 
     def writeFasta(self, id, first_line, sequence):
+        """Writes a .fasta file in the 'fastas' folder named after the fasta's ID and containing the truncated sequence."""
         fasta_folder = os.path.join(os.path.dirname(__file__), f"fastas")
         if not os.path.exists(fasta_folder):
             os.mkdir(fasta_folder)
@@ -322,6 +464,7 @@ class ClientTkinterUiDesignApp:
             output_file.write(sequence)
 
     def useDashing(self):
+        """Calls the appropriate shell scripts (dashingShell.sh) and files after giving them execution permissions."""
 
         #grant execution permissions
         st = os.stat('dashingShell.sh')
@@ -336,36 +479,42 @@ class ClientTkinterUiDesignApp:
         subprocess.call(['sh', "dashingShell.sh"])
 
     def beginDecryption(self):
-        decrypted_predictions = []
-        classes_dict = {0: 'B.1.1.529 (Omicron)', 1: 'B.1.617.2 (Delta)', 2: 'B.1.621 (Mu)', 3: 'C.37 (Lambda)'}
-        pred_folder = os.path.join(os.path.dirname(__file__), "predictions")
+        try:
 
-        zip_name = os.path.join(pred_folder, "enc_predictions.zip") if os.listdir(pred_folder) else os.path.join(os.path.dirname(__file__), "enc_predictions.zip")
+            if not self.decrypt_name_var.get().endswith(".zip"):
+                raise Exception("Invalid file type: Only .zip files are supported.")
 
-        with zipfile.ZipFile(zip_name, "r") as zObject:
-            zObject.extractall(path=pred_folder)
-        
-        enc_file_list = [filename for filename in os.listdir(pred_folder) if filename.endswith(".enc")]
+            decrypted_predictions = []
+            classes_dict = {0: 'B.1.1.529 (Omicron)', 1: 'B.1.617.2 (Delta)', 2: 'B.1.621 (Mu)', 3: 'C.37 (Lambda)'}
+            pred_folder = os.path.join(os.path.dirname(__file__), "predictions")
 
-        for filename in enc_file_list:
-            print(filename)
-            with open(os.path.join(pred_folder, filename), "rb") as f:
-                decrypted_prediction = self.fhe_model_client.deserialize_decrypt_dequantize(f.read())[0]
-                decrypted_predictions.append(decrypted_prediction)
-        
-        decrypted_predictions_classes = numpy.array(decrypted_predictions).argmax(axis=1)
-        final_output = [classes_dict[output] for output in decrypted_predictions_classes]
-        print(final_output)
+            zip_name = self.decrypt_name_var.get() #os.path.join(pred_folder, "enc_predictions.zip") if os.listdir(pred_folder) else os.path.join(os.path.dirname(__file__), "enc_predictions.zip")
 
+            with zipfile.ZipFile(zip_name, "r") as zObject:
+                zObject.extractall(path=pred_folder)
+            
+            enc_file_list = [filename for filename in os.listdir(pred_folder) if filename.endswith(".enc")]
 
-        # zip_file_list = {filename: opened_zip.read(filename) for filename in opened_zip.namelist() if filename.endswith(".enc")}
-        #     for key in zip_file_list.keys():
-        #         with open(f"{zip_file_list[key]}", "rb") as f:
-        #             decrypted_prediction = self.fhe_model_client.deserialize_decrypt_dequantize(f.read())[0]
-        #             decrypted_predictions.append(decrypted_prediction)
-        # decrypted_predictions_classes = numpy.array(decrypted_predictions).argmax(axis=1)
-        # final_output = [classes_dict[output] for output in decrypted_predictions_classes]
-        # print(final_output)
+            for filename in enc_file_list:
+                print(filename)
+                with open(os.path.join(pred_folder, filename), "rb") as f:
+                    decrypted_prediction = self.fhe_model_client.deserialize_decrypt_dequantize(f.read())[0]
+                    decrypted_predictions.append(decrypted_prediction)
+            
+            decrypted_predictions_classes = numpy.array(decrypted_predictions).argmax(axis=1)
+            final_output = [classes_dict[output] for output in decrypted_predictions_classes]
+
+            print(final_output)
+            # print(final_output[0])
+
+            for i in range(len(final_output)):
+                self.data_dictionary[i]['result'] = final_output[i]
+
+            #print(self.data_dictionary)
+            self.writeOutput([dictionary for dictionary in self.data_dictionary.values()])
+
+        except Exception as e:
+            self.writeOutput(f"Error: {str(e)}")
         
 #endregion
 
@@ -377,7 +526,7 @@ def getRequiredFiles():
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/dashingShell.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/Dashing/readHllandWrite.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/selected%20features.txt",
+        #r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/selected%20features.txt",
         ]
     for file in files:
         print(file.split("/")[-1].replace("%20", " "))

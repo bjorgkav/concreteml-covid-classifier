@@ -18,17 +18,17 @@ def start_classification(request):
     clean_predictions_folder()
 
     count = 0
-    model_path =os.path.join(BASE_DIR, "Compiled Model") 
+    model_path = os.path.join(BASE_DIR, "Compiled Model") 
     keys_path = os.path.join(BASE_DIR, "classifier/keys")
     keys_file = request.FILES['keys_file']
     pred_dir = os.path.join(BASE_DIR, "classifier/predictions")
 
-    data = remove_empty_bytes(request.FILES['file'].read().split(b'\n\n\n\n\n'))
+    data = request.FILES['inputs'].read.split(b'\n\n\n\n\n')
     #del request.session['data_dict']
 
     enc_file_list = []
 
-    #print(data)
+    print([type(d) for d in data])
     #print(keys_file.read())
 
     #print(data)
@@ -59,14 +59,13 @@ def create_zip(file_list):
     #zip_file = zipfile.ZipFile(zip_filename, 'w')
     
     for filename in file_list:
-
         count += 1
         with open(filename, "rb") as file_read:
             zip_file.write(filename, f"encrypted_prediction_{count}.enc")
     zip_file.close()
 
     #craft download response    
-    resp = HttpResponse(buffer.getvalue(), content_type = "application/x-zip-compressed")
+    resp = HttpResponse(buffer.getvalue(), content_type = "application/force-download")
     resp['Content-Disposition'] = f'attachment; filename={zip_download_name}'
 
     return resp
@@ -77,6 +76,3 @@ def clean_predictions_folder():
     if(os.listdir(pred_dir)):
         for f in os.listdir(pred_dir):
             os.remove(os.path.join(pred_dir, f))
-
-def remove_empty_bytes(list):
-    return [x for x in list if x != b'']

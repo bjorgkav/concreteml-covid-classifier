@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import tkinter as tk
 from customtkinter import (
     CTk,
     CTkButton,
@@ -20,7 +21,8 @@ class ClientTkinterUiDesignApp:
         set_default_color_theme("dark-blue")
         self.root.geometry("800x900")
         self.root.resizable(True, True)
-        self.root.title("concrete-covid-classifier")
+        self.root.title(
+            "FHE-Enabled SARS-CoV-2 Classifier System (Client-side)")
         self.title = CTkLabel(self.root)
         self.title.configure(
             bg_color="#035690",
@@ -61,22 +63,26 @@ class ClientTkinterUiDesignApp:
             text='Enter your fasta or zip filepath for Dashing:')
         self.dashing_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
         self.dashing_filename = CTkEntry(self.dashing_frame)
+        self.dashing_name_var = tk.StringVar()
         self.dashing_filename.configure(
             exportselection=False,
             justify="left",
             state="disabled",
             takefocus=False,
+            textvariable=self.dashing_name_var,
             width=460)
         self.dashing_filename.grid(column=0, padx=10, row=1)
         self.dashing_browse = CTkButton(self.dashing_frame, hover=True)
         self.dashing_browse.configure(hover_color="#299cd9", text='Browse...')
         self.dashing_browse.grid(column=2, padx=10, row=1)
+        self.dashing_browse.configure(command=self.getDashingInput)
         self.dashing_begin = CTkButton(self.dashing_frame)
         self.dashing_begin.configure(
             hover_color="#299cd9",
             text='Begin dashing',
             width=300)
         self.dashing_begin.grid(column=0, columnspan=3, pady=10, row=2)
+        self.dashing_begin.configure(command=self.beginDashing)
         self.dashing_frame.pack(
             anchor="w",
             fill="x",
@@ -88,37 +94,29 @@ class ClientTkinterUiDesignApp:
         self.encrypt_label.configure(
             anchor="w",
             justify="left",
-            text='Enter your dashing output filepath for encryption:')
+            text='Enter your dashing output (.csv file) filepath for encryption:')
         self.encrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
         self.encrypt_filename = CTkEntry(self.encrypt_frame)
+        self.encrypt_name_var = tk.StringVar()
         self.encrypt_filename.configure(
             exportselection=False,
             justify="left",
             state="disabled",
             takefocus=False,
+            textvariable=self.encrypt_name_var,
             width=460)
         self.encrypt_filename.grid(column=0, padx=10, row=1)
         self.encrypt_browse = CTkButton(self.encrypt_frame, hover=True)
         self.encrypt_browse.configure(hover_color="#299cd9", text='Browse...')
         self.encrypt_browse.grid(column=2, padx=10, row=1)
+        self.encrypt_browse.configure(command=self.getEncryptInput)
         self.encrypt_begin = CTkButton(self.encrypt_frame)
         self.encrypt_begin.configure(
             hover_color="#299cd9",
             text='Encrypt file',
             width=300)
         self.encrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.encrypt_output = CTkTextbox(self.encrypt_frame)
-        self.encrypt_output.configure(height=75, state="disabled", width=600)
-        _text_ = 'Your encryption output will be displayed here.'
-        self.encrypt_output.configure(state="normal")
-        self.encrypt_output.insert("0.0", _text_)
-        self.encrypt_output.configure(state="disabled")
-        self.encrypt_output.grid(
-            column=0,
-            columnspan=3,
-            pady=10,
-            row=3,
-            sticky="s")
+        self.encrypt_begin.configure(command=self.beginEncryption)
         self.encrypt_frame.pack(
             anchor="w",
             fill="x",
@@ -130,49 +128,71 @@ class ClientTkinterUiDesignApp:
         self.decrypt_label.configure(
             anchor="w",
             justify="left",
-            text='Enter your dashing output filepath for encryption:')
+            text='Enter your server-side prediction output (.enc or .zip file) filepath for decryption:')
         self.decrypt_label.grid(column=0, padx=10, pady=10, row=0, sticky="nw")
         self.decrypt_filename = CTkEntry(self.decrypt_frame)
+        self.decrypt_name_var = tk.StringVar()
         self.decrypt_filename.configure(
             exportselection=False,
             justify="left",
             state="disabled",
             takefocus=False,
+            textvariable=self.decrypt_name_var,
             width=460)
         self.decrypt_filename.grid(column=0, padx=10, row=1)
         self.decrypt_browse = CTkButton(self.decrypt_frame, hover=True)
         self.decrypt_browse.configure(hover_color="#299cd9", text='Browse...')
         self.decrypt_browse.grid(column=2, padx=10, row=1)
+        self.decrypt_browse.configure(command=self.getDecryptInput)
         self.decrypt_begin = CTkButton(self.decrypt_frame)
         self.decrypt_begin.configure(
             hover_color="#299cd9",
-            text='Encrypt file',
+            text='Decrypt file',
             width=300)
         self.decrypt_begin.grid(column=0, columnspan=3, pady=10, row=2)
-        self.decrypt_output = CTkTextbox(self.decrypt_frame)
-        self.decrypt_output.configure(height=75, state="disabled", width=600)
-        _text_ = 'Your decryption output will be displayed here.'
-        self.decrypt_output.configure(state="normal")
-        self.decrypt_output.insert("0.0", _text_)
-        self.decrypt_output.configure(state="disabled")
-        self.decrypt_output.grid(
-            column=0,
-            columnspan=3,
-            pady=10,
-            row=3,
-            sticky="s")
+        self.decrypt_begin.configure(command=self.beginDecryption)
         self.decrypt_frame.pack(
             anchor="w",
             fill="x",
             padx=20,
             pady=10,
             side="top")
+        ctkframe2 = CTkFrame(self.root)
+        self.app_output_label = CTkLabel(ctkframe2)
+        self.app_output_label.configure(text='Output Window')
+        self.app_output_label.pack(side="top")
+        self.app_output = CTkTextbox(ctkframe2)
+        self.app_output.configure(height=75, state="disabled")
+        _text_ = 'App activity will be displayed here.'
+        self.app_output.configure(state="normal")
+        self.app_output.insert("0.0", _text_)
+        self.app_output.configure(state="disabled")
+        self.app_output.pack(expand=True, fill="both", padx=10, pady=10)
+        ctkframe2.pack(expand=True, fill="both", padx=20, pady=10, side="top")
 
         # Main widget
         self.mainwindow = self.root
 
     def run(self):
         self.mainwindow.mainloop()
+
+    def getDashingInput(self):
+        pass
+
+    def beginDashing(self):
+        pass
+
+    def getEncryptInput(self):
+        pass
+
+    def beginEncryption(self):
+        pass
+
+    def getDecryptInput(self):
+        pass
+
+    def beginDecryption(self):
+        pass
 
 
 if __name__ == "__main__":
