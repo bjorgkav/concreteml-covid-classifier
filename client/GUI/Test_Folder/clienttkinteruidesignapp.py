@@ -14,11 +14,10 @@ from customtkinter import (
     set_default_color_theme)
 
 from tkinter import filedialog as fd
-
 from tkinter import END, INSERT
-
+from datetime import date
 from concrete.ml.deployment import FHEModelClient
-import os, requests, stat, pathlib, numpy, traceback, urllib
+import os, requests, stat, numpy, traceback, csv
 from pandas import DataFrame as pd
 from pandas import read_csv
 from numpy import save
@@ -171,7 +170,7 @@ class ClientTkinterUiDesignApp:
                 for f in os.listdir(os.path.join(os.path.dirname(__file__), "fastas")):
                     os.remove(os.path.join(os.path.join(os.path.dirname(__file__), "fastas"), f))
 
-            self.writeOutput("Beginning Dashing...", True)
+            self.writeOutput("Beginning Dashing...", False)
         
             filename = self.dashing_name_var.get()
 
@@ -221,8 +220,10 @@ class ClientTkinterUiDesignApp:
 
             if(not self.encrypt_name_var.get().endswith(".csv")):
                 raise Exception("Invalid file type. Only .csv files are supported.")
+            
+            self.ensureCacheExists()
 
-            self.writeOutput("Generating Keys...", True)
+            self.writeOutput("Generating Keys...", False)
 
             self.generateKeys()
 
@@ -243,10 +244,10 @@ class ClientTkinterUiDesignApp:
                 self.data_dictionary[count] = {'id':id, 'result':''} 
 
             #print(self.data_dictionary)
-
             for row in range(0, arr_no_id.shape[0]):
                 #clear_input = arr[:,1:]
                 clear_input = arr_no_id[[row],:]
+
                 #print(clear_input)
                 encrypted_input = self.fhe_model_client.quantize_encrypt_serialize(clear_input)
                 self.writeOutput(f"New row encrypted of {type(encrypted_input)}; adding to list of encrypted values...")
@@ -254,14 +255,14 @@ class ClientTkinterUiDesignApp:
             
             self.encrypted_rows = encrypted_rows
             
-            for row in encrypted_rows:
-                print("Row: ", row[:10])
+            # for row in encrypted_rows:
+            #     print("Row: ", row[:10])
 
-            self.writeOutput(f"Encryption complete! The first 15 character of your encrypted output:\n{encrypted_rows[0][0:16]}")
+            self.writeOutput(f"Encryption complete! Here are the first 15 character of your encrypted output:\n{encrypted_rows[0][0:16]}")
 
             self.saveEncryptedOutput()
 
-            self.writeOutput("Encrypted inputs and key files saved to 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl'. Please do not move these files until after prediction.")
+            self.writeOutput("Saved encrypted inputs and key files to 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' respectively.\nPlease do not move these files until after prediction.")
 
             app_url = "http://localhost:8000"
 
@@ -303,7 +304,7 @@ class ClientTkinterUiDesignApp:
         request_output = client.post(f"{app_url}/start_classification", data = request_data, files=request_files, headers=dict(Referer=app_url), )
 
         if request_output.ok:
-            self.writeOutput(f"Response Code: {request_output.status_code}. Classification completed!")
+            self.writeOutput(f"Response Code {request_output.status_code}: Classification completed!")
 
             if("test.zip" in os.listdir(os.path.dirname(__file__))): os.remove(os.path.join(os.path.dirname(__file__), "test.zip"), timeout=(10, 10))
 
@@ -431,6 +432,8 @@ class ClientTkinterUiDesignApp:
 
             if not self.decrypt_name_var.get().endswith(".zip"):
                 raise Exception("Invalid file type: Only .zip files are supported.")
+            
+            self.writeOutput("Beginning decryption of encrypted predictions recieved from server...")
 
             decrypted_predictions = []
             classes_dict = {0: 'B.1.1.529 (Omicron)', 1: 'B.1.617.2 (Delta)', 2: 'B.1.621 (Mu)', 3: 'C.37 (Lambda)'}
@@ -444,7 +447,7 @@ class ClientTkinterUiDesignApp:
             enc_file_list = [filename for filename in os.listdir(pred_folder) if filename.endswith(".enc")]
 
             for filename in enc_file_list:
-                print(filename)
+                #print(filename)
                 with open(os.path.join(pred_folder, filename), "rb") as f:
                     decrypted_prediction = self.fhe_model_client.deserialize_decrypt_dequantize(f.read())[0]
                     decrypted_predictions.append(decrypted_prediction)
@@ -452,18 +455,55 @@ class ClientTkinterUiDesignApp:
             decrypted_predictions_classes = numpy.array(decrypted_predictions).argmax(axis=1)
             final_output = [classes_dict[output] for output in decrypted_predictions_classes]
 
-            print(final_output)
+            # print(final_output)
             # print(final_output[0])
 
             for i in range(len(final_output)):
                 self.data_dictionary[i]['result'] = final_output[i]
 
             #print(self.data_dictionary)
-            self.writeOutput([dictionary for dictionary in self.data_dictionary.values()])
+            self.writeOutput("Prediction Results:")
+            for dictionary in self.data_dictionary.values():
+                self.writeOutput(f"ID {dictionary['id']}: {dictionary['result']}")
+
+            self.writeOutput("Saving prediction results to output file...")
+            #create a file to save the prediction into
+            self.savePredictionResult()
+            self.writeOutput("Saving completed! Thank you for using the tool!")
+
 
         except Exception as e:
             self.writeOutput(f"Error: {str(e)}")
         
+    def savePredictionResult(self):
+        # save as individual and then add to cache.csv
+        self.ensureCacheExists()
+        cache_name = os.path.join(os.path.dirname(__file__), f"predictions/cache.csv")
+        cache_df = read_csv(cache_name)
+
+        for dict in self.data_dictionary.values():
+            print(dict)
+            df = pd.from_dict({key: [str(value).split(" ")[0]] for key, value in dict.items()})
+            #df = df.rename(columns={'id':'Accession ID', 'result':'Lineage'})
+            output_name = f"prediction_result_{dict['id']}_{date.today()}.csv"
+            df.to_csv(os.path.join(os.path.dirname(__file__), f"predictions/{output_name}"), index=False, header=True)
+        
+            # add your results into cache.csv
+            # Open the CSV file in "append" mode
+            with open(cache_name, 'a', newline='') as f:
+                if(dict['id'] not in set(cache_df['id'])):
+                    # Create a dictionary writer with the dict keys as column fieldnames
+                    writer = csv.DictWriter(f, fieldnames=dict.keys())
+                    # Append single row to CSV
+                    writer.writerow(dict)
+
+    def ensureCacheExists(self):
+        # ensure "cache.csv" created in predictions folder
+        cache_name = os.path.join(os.path.dirname(__file__), f"predictions/cache.csv")
+        if not os.path.exists(cache_name):
+            cache_df = pd(data={'id':[], 'result':[]})
+            cache_df.to_csv(cache_name, index=False, header=True)
+
 #endregion
 
 #region functions outside the class
