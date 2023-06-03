@@ -11,6 +11,7 @@ from concrete.ml.deployment import FHEModelServer
 
 # Create your views here.
 def index(request):
+    
     return render(request, 'index.html', context={'classes_list':{0: 'B.1.1.529 (Omicron)', 1: 'B.1.617.2 (Delta)', 2: 'B.1.621 (Mu)', 3: 'C.37 (Lambda)'}})
 
 def start_classification(request):
