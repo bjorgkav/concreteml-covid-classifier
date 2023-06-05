@@ -120,9 +120,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# STATIC_ROOT = os.path.join(BASE_DIR, 'concreteClassifierApp/static')
+
 # BASE_DIR is the base directory of the project NOT the app. this will override any css/files that have the same name in the app static files
 STATICFILES_DIR = [
-    os.path.join(BASE_DIR, 'static')
+    os.path.join(BASE_DIR, 'concreteClassifierApp/static'),
 ]
 
 MEDIA_ROOT = 'uploads/'

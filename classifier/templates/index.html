@@ -21,6 +21,19 @@
   </head>
 
   <body>
+
+    <form action="{% url 'classifier:start_classification' %}" method="post">
+      {% csrf_token %}
+      <div class="form-group mt-3" hidden>
+          <label class="mr-2">Upload your encrypted inputs:</label>
+          <input type="file" name="file">
+      </div>
+      <div class="form-group mt-3" hidden>
+          <label class="mr-2">Upload your evaluation keys (.ekl):</label>
+          <input type="file" name="keys_file">
+      </div>
+    </form>
+
     <main role="main">
 
       <!-- Main jumbotron for a primary marketing message or call to action -->
@@ -49,7 +62,7 @@
           <div class="col-md-4">
             <h2>Client-side application</h2>
             <p>This classification system is intended to be used with the client-side GUI application, which can be accessed here (see requirements.txt for the required packages):</p>
-            <p><a class="btn btn-secondary" href="#" role="button">Download the Client-side GUI Application &raquo;</a></p>
+            <p><a class="btn btn-secondary" href="https://github.com/bjorgkav/concreteml-covid-classifier/blob/main/client/GUI/Client_GUI_App.py" role="button">Download the Client-side GUI Application &raquo;</a></p>
           </div>
           <div class="col-md-4">
             <h2>SARS-CoV-2 Strains Currently Supported</h2>

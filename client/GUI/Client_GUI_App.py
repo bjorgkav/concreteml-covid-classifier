@@ -20,7 +20,6 @@ from concrete.ml.deployment import FHEModelClient
 import os, requests, stat, numpy, traceback, csv
 from pandas import DataFrame as pd
 from pandas import read_csv
-from numpy import save
 
 #region class
 class ClientTkinterUiDesignApp:
@@ -147,6 +146,7 @@ class ClientTkinterUiDesignApp:
         self.app_output.configure(state="disabled")
 
     def processData(self):
+        self.writeOutput("", True)
         self.beginDashing()
         self.beginEncryption()
         self.beginDecryption()
@@ -221,7 +221,7 @@ class ClientTkinterUiDesignApp:
             if(not self.encrypt_name_var.get().endswith(".csv")):
                 raise Exception("Invalid file type. Only .csv files are supported.")
             
-            self.ensureCacheExists()
+            #self.ensureCacheExists()
 
             self.writeOutput("Generating Keys...", False)
 
@@ -477,9 +477,9 @@ class ClientTkinterUiDesignApp:
         
     def savePredictionResult(self):
         # save as individual and then add to cache.csv
-        self.ensureCacheExists()
-        cache_name = os.path.join(os.path.dirname(__file__), f"predictions/cache.csv")
-        cache_df = read_csv(cache_name)
+        #self.ensureCacheExists()
+        # cache_name = os.path.join(os.path.dirname(__file__), f"predictions/cache.csv")
+        # cache_df = read_csv(cache_name)
 
         for dict in self.data_dictionary.values():
             print(dict)
@@ -490,19 +490,19 @@ class ClientTkinterUiDesignApp:
         
             # add your results into cache.csv
             # Open the CSV file in "append" mode
-            with open(cache_name, 'a', newline='') as f:
-                if(dict['id'] not in set(cache_df['id'])):
-                    # Create a dictionary writer with the dict keys as column fieldnames
-                    writer = csv.DictWriter(f, fieldnames=dict.keys())
-                    # Append single row to CSV
-                    writer.writerow(dict)
+            # with open(cache_name, 'a', newline='') as f:
+            #     if(dict['id'] not in set(cache_df['id'])):
+            #         # Create a dictionary writer with the dict keys as column fieldnames
+            #         writer = csv.DictWriter(f, fieldnames=dict.keys())
+            #         # Append single row to CSV
+            #         writer.writerow(dict)
 
-    def ensureCacheExists(self):
-        # ensure "cache.csv" created in predictions folder
-        cache_name = os.path.join(os.path.dirname(__file__), f"predictions/cache.csv")
-        if not os.path.exists(cache_name):
-            cache_df = pd(data={'id':[], 'result':[]})
-            cache_df.to_csv(cache_name, index=False, header=True)
+    # def ensureCacheExists(self):
+    #     # ensure "cache.csv" created in predictions folder
+    #     cache_name = os.path.join(os.path.dirname(__file__), f"predictions/cache.csv")
+    #     if not os.path.exists(cache_name):
+    #         cache_df = pd(data={'id':[], 'result':[]})
+    #         cache_df.to_csv(cache_name, index=False, header=True)
 
 #endregion
 
@@ -543,10 +543,10 @@ def download(url, dest_folder):
 #endregion
 
 if __name__ == "__main__":
-    download_files = input("Would you like to download the required files? (Type Yes or No.) ")
+    #download_files = input("Would you like to download the required files? (Type Yes or No.) ")
     
-    if(download_files.strip() in ["y", "yes", "YES", "Yes"]):
-        getRequiredFiles()
+   # if(download_files.strip() in ["y", "yes", "YES", "Yes"]):
+    getRequiredFiles()
 
     app = ClientTkinterUiDesignApp()
     app.run()
