@@ -136,9 +136,9 @@ start_time = time.time()
 
 X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=.40)
 
-st_x = StandardScaler()
-X_train = st_x.fit_transform(X_train)
-X_test = st_x.transform(X_test)
+# st_x = StandardScaler()
+# X_train = st_x.fit_transform(X_train)
+# X_test = st_x.transform(X_test)
 
 print(f"Running time is {time.time() - start_time} seconds")
 
@@ -253,23 +253,23 @@ print(confusion_matrix(y_test, y_pred_clear), "\n")
 
 
 #Attempting to save the model
-from concrete.ml.deployment import FHEModelClient, FHEModelDev, FHEModelServer
+# from concrete.ml.deployment import FHEModelClient, FHEModelDev, FHEModelServer
 
-start_time = time.time()
+# start_time = time.time()
 
-fhemodel_dev = FHEModelDev("./concrete-covid-classifier", model)
-fhemodel_dev.save()
+# fhemodel_dev = FHEModelDev("./concrete-covid-classifier", model)
+# fhemodel_dev.save()
 
-print(f"Running time for saving the FHE model is {time.time() - start_time} seconds")
+# print(f"Running time for saving the FHE model is {time.time() - start_time} seconds")
 
 
 # In[6]:
 
 
-#Saving Scikit-learn model
-from joblib import dump, load
+# #Saving Scikit-learn model
+# from joblib import dump, load
 
-dump(skmodel, 'concrete-covid-classifier/scikitlearnmodel.joblib')
+# dump(skmodel, 'concrete-covid-classifier/scikitlearnmodel.joblib')
 #loaded_model = load('scikitlearnmodel.joblib')
 
 
@@ -318,51 +318,51 @@ print("Concrete-ML SVC Accuracy: ",model4.score(X_test,y_test)*100,"%")
 # In[ ]:
 
 
-#ALTERNATE CROSS-VALIDATION METHOD (K-fold Cross validation)
-from sklearn.model_selection import KFold
-k = 5
-k_fold = KFold(n_splits = k, random_state = None)
+# #ALTERNATE CROSS-VALIDATION METHOD (K-fold Cross validation)
+# from sklearn.model_selection import KFold
+# k = 5
+# k_fold = KFold(n_splits = k, random_state = None)
 
-sklmodelcross = skLR()
+# sklmodelcross = skLR()
 
-acc_scores = []
+# acc_scores = []
 
-for training_index, testing_index in k_fold.split(x):
-    X_train, X_test = x[training_index,:], x[testing_index,:]  
-    y_train, y_test = y[training_index] , y[testing_index]
-    sklmodelcross.fit(X_train,y_train)
-    y_pred = sklmodelcross.predict(X_test)
-    acc = accuracy_score(y_pred , y_test)  
-    acc_scores.append(acc)
+# for training_index, testing_index in k_fold.split(x):
+#     X_train, X_test = x[training_index,:], x[testing_index,:]  
+#     y_train, y_test = y[training_index] , y[testing_index]
+#     sklmodelcross.fit(X_train,y_train)
+#     y_pred = sklmodelcross.predict(X_test)
+#     acc = accuracy_score(y_pred , y_test)  
+#     acc_scores.append(acc)
 
-mean_acc_score = sum(acc_scores) / k
+# mean_acc_score = sum(acc_scores) / k
 
-print("Accuracy score of each fold (sklearn plaintext): ", acc_scores)  
-print("Mean accuracy score (sklearn plaintext): ", mean_acc_score)  
+# print("Accuracy score of each fold (sklearn plaintext): ", acc_scores)  
+# print("Mean accuracy score (sklearn plaintext): ", mean_acc_score)  
 
 
 # In[ ]:
 
 
-#ALTERNATE CROSS-VALIDATION METHOD (K-fold Cross validation)
-from sklearn.model_selection import KFold
-k = 100
-k_fold = KFold(n_splits = k, random_state = None)
+# #ALTERNATE CROSS-VALIDATION METHOD (K-fold Cross validation)
+# from sklearn.model_selection import KFold
+# k = 100
+# k_fold = KFold(n_splits = k, random_state = None)
 
-concreteLRcross = LogisticRegression()
+# concreteLRcross = LogisticRegression()
 
-acc_scores = []
+# acc_scores = []
 
-for training_index, testing_index in k_fold.split(x):
-    X_train, X_test = x[training_index,:], x[testing_index,:]  
-    y_train, y_test = y[training_index] , y[testing_index]
-    concreteLRcross.fit(X_train,y_train)
-    y_pred = concreteLRcross.predict(X_test, execute_in_fhe = False)
-    acc = accuracy_score(y_pred , y_test)  
-    acc_scores.append(acc)
+# for training_index, testing_index in k_fold.split(x):
+#     X_train, X_test = x[training_index,:], x[testing_index,:]  
+#     y_train, y_test = y[training_index] , y[testing_index]
+#     concreteLRcross.fit(X_train,y_train)
+#     y_pred = concreteLRcross.predict(X_test)
+#     acc = accuracy_score(y_pred , y_test)  
+#     acc_scores.append(acc)
 
-mean_acc_score = sum(acc_scores) / k
+# mean_acc_score = sum(acc_scores) / k
 
-print("Accuracy score of each fold (quantized plaintext): ", acc_scores)  
-print("Mean accuracy score (quantized plaintext): ", mean_acc_score)  
+# print("Accuracy score of each fold (quantized plaintext): ", acc_scores)  
+# print("Mean accuracy score (quantized plaintext): ", mean_acc_score)  
 

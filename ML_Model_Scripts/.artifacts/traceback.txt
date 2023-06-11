@@ -1,19 +1,18 @@
 Traceback (most recent call last):
-  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML Model Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/fhe/compilation/compiler.py", line 508, in compile
-    circuit = Circuit(self.graph, mlir, self.configuration)
-  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML Model Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/fhe/compilation/circuit.py", line 43, in __init__
-    self._initialize_client_and_server()
-  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML Model Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/fhe/compilation/circuit.py", line 46, in _initialize_client_and_server
-    self.server = Server.create(self.mlir, self.configuration)
-  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML Model Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/fhe/compilation/server.py", line 147, in create
-    compilation_result = support.compile(mlir, options)
-  File "/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML Model Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete/compiler/library_support.py", line 156, in compile
-    self.cpp().compile(mlir_program, options.cpp())
-RuntimeError: Can't emit artifacts: Command failed:ld --shared -o /tmp/tmp92uk0pmz/sharedlib.so /tmp/tmp92uk0pmz.module-0.mlir.o /mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML Model Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete_python.libs/libConcretelangRuntime-1d065e20.so -rpath=/mnt/c/Users/Johann Vivas/Documents/Benjo's Files/School/2022-2023/THESIS/ML Model Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete_python.libs --disable-new-dtags 2>&1
-Code:256
-ld: cannot find /mnt/c/Users/Johann: No such file or directory
-ld: cannot find Vivas/Documents/Benjos Files/School/2022-2023/THESIS/ML Model Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete_python.libs/libConcretelangRuntime-1d065e20.so -rpath=/mnt/c/Users/Johann Vivas/Documents/Benjos: No such file or directory
-ld: cannot find Files/School/2022-2023/THESIS/ML: No such file or directory
-ld: cannot find Model: No such file or directory
-ld: cannot find Trials/concreteml-covid-classifier/lib/python3.10/site-packages/concrete_python.libs: No such file or directory
-
+  File "/home/vivs/.local/lib/python3.10/site-packages/concrete/fhe/compilation/compiler.py", line 434, in compile
+    self._evaluate("Compiling", inputset)
+  File "/home/vivs/.local/lib/python3.10/site-packages/concrete/fhe/compilation/compiler.py", line 279, in _evaluate
+    self._trace(first_sample)
+  File "/home/vivs/.local/lib/python3.10/site-packages/concrete/fhe/compilation/compiler.py", line 207, in _trace
+    self.graph = Tracer.trace(self.function, parameters)
+  File "/home/vivs/.local/lib/python3.10/site-packages/concrete/fhe/tracing/tracer.py", line 77, in trace
+    output_tracers: Any = function(**arguments)
+  File "/home/vivs/.local/lib/python3.10/site-packages/concrete/ml/sklearn/base.py", line 1541, in inference_to_compile
+    return self._inference(q_X)
+  File "/home/vivs/.local/lib/python3.10/site-packages/concrete/ml/sklearn/base.py", line 1552, in _inference
+    y_pred = q_X @ self._q_weights - self._weight_quantizer.zero_point * numpy.sum(
+  File "/home/vivs/.local/lib/python3.10/site-packages/concrete/fhe/tracing/tracer.py", line 517, in __matmul__
+    return Tracer._trace_numpy_operation(np.matmul, self, self.sanitize(other))
+  File "/home/vivs/.local/lib/python3.10/site-packages/concrete/fhe/tracing/tracer.py", line 403, in _trace_numpy_operation
+    evaluation = operation(*sample, **kwargs)
+ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 512 is different from 20)

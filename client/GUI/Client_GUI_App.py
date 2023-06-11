@@ -245,6 +245,7 @@ class ClientTkinterUiDesignApp:
 
             #print(self.data_dictionary)
             for row in range(0, arr_no_id.shape[0]):
+                self.encrypted_id = self.data_dictionary[row]['id']
                 #clear_input = arr[:,1:]
                 clear_input = arr_no_id[[row],:]
 
@@ -260,7 +261,7 @@ class ClientTkinterUiDesignApp:
 
             self.writeOutput(f"Encryption complete! Here are the first 15 character of your encrypted output:\n{encrypted_rows[0][0:16]}")
 
-            self.saveEncryptedOutput()
+            enc_filename = self.saveEncryptedOutput(self.encrypted_id)
 
             self.writeOutput("Saved encrypted inputs and key files to 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' respectively.\nPlease do not move these files until after prediction.")
 
@@ -270,14 +271,14 @@ class ClientTkinterUiDesignApp:
 
             client.get(app_url)
 
-            predictions_zip_name = self.sendEncryptRequestToServer(client=client)
+            predictions_zip_name = self.sendEncryptRequestToServer(enc_filename, client=client)
 
             self.decrypt_name_var.set(predictions_zip_name)
 
         except Exception as e:
             self.writeOutput(f"Error: {traceback.format_exc()}")
 
-    def sendEncryptRequestToServer(self, client):
+    def sendEncryptRequestToServer(self, encrypt_filename, client):
         """Sends 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' (expected to be located in the same directory as the app) to the server-side app through the Python requests library. URL is currently set to localhost:8000 for development purposes."""
         
         app_url = "http://localhost:8000"
@@ -292,7 +293,7 @@ class ClientTkinterUiDesignApp:
         #self.writeOutput(f"{type(self.encrypted_rows)}")
 
         eval_keys_file = open('serialized_evaluation_keys.ekl', "rb")
-        inputs_file = open("encrypted_input.txt", "rb")
+        inputs_file = open(encrypt_filename, "rb")
         request_data = dict(csrfmiddlewaretoken=csrftoken)
         request_files = dict(inputs=inputs_file, keys_file=eval_keys_file)
         
@@ -329,8 +330,8 @@ class ClientTkinterUiDesignApp:
         # Get the serialized evaluation keys
         self.serialized_evaluation_keys = fhemodel_client.get_serialized_evaluation_keys()
 
-    def saveEncryptedOutput(self):
-        filename = "encrypted_input.txt"
+    def saveEncryptedOutput(self, id):
+        filename = f"{id}_encrypted_input.txt"
         with open(os.path.join(os.path.dirname(__file__), filename), "wb") as enc_file:
             for line in self.encrypted_rows:
                 enc_file.write(line)
@@ -338,6 +339,7 @@ class ClientTkinterUiDesignApp:
         
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
+        return filename
 
     def dropColumns(self, dashing_output, file = os.path.join(os.path.dirname(__file__), "selected_features.txt")):
         with open(file, "r") as feature_file:
