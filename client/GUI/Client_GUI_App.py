@@ -15,9 +15,9 @@ from customtkinter import (
 
 from tkinter import filedialog as fd
 from tkinter import END, INSERT
-from datetime import date
+from datetime import date, datetime
 from concrete.ml.deployment import FHEModelClient
-import os, requests, stat, numpy, traceback, csv
+import os, requests, stat, numpy, traceback
 from pandas import DataFrame as pd
 from pandas import read_csv
 
@@ -126,6 +126,13 @@ class ClientTkinterUiDesignApp:
         self.app_output.insert("0.0", _text_)
         self.app_output.configure(state="disabled")
         self.app_output.pack(expand=True, fill="both", padx=10, pady=10)
+        self.app_pred_history = CTkTextbox(ctkframe2)
+        self.app_pred_history.configure(height=75, state="disabled")
+        _text_ = 'Prediction History:\n'
+        self.app_pred_history.configure(state="normal")
+        self.app_pred_history.insert("0.0", _text_)
+        self.app_pred_history.configure(state="disabled")
+        self.app_pred_history.pack(expand=True, fill="both", padx=10, pady=10)
         ctkframe2.pack(expand=True, fill="both", padx=20, pady=10, side="top")
 
         # Main widget
@@ -144,6 +151,17 @@ class ClientTkinterUiDesignApp:
             self.app_output.insert(INSERT, f"{string}\n\n")
         self.app_output.see(END)
         self.app_output.configure(state="disabled")
+
+    def writePredOutput(self, string, delete_switch = False):
+        """Function for writing argument 'string' to the app's output window. Set argument 'delete_switch' to True to clear the window before printing."""
+        self.app_pred_history.configure(state="normal")
+        if(delete_switch):
+            self.app_pred_history.delete("1.0", END) #tk.END
+            self.app_pred_history.insert("0.0", f"{string}\n\n")
+        else:
+            self.app_pred_history.insert(INSERT, f"{string}\n\n")
+        self.app_pred_history.see(END)
+        self.app_pred_history.configure(state="disabled")
 
     def processData(self):
         self.writeOutput("", True)
@@ -467,6 +485,7 @@ class ClientTkinterUiDesignApp:
             self.writeOutput("Prediction Results:")
             for dictionary in self.data_dictionary.values():
                 self.writeOutput(f"ID {dictionary['id']}: {dictionary['result']}")
+                self.writePredOutput(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} -- ID {dictionary['id']}: {dictionary['result']}")
 
             self.writeOutput("Saving prediction results to output file...")
             #create a file to save the prediction into

@@ -157,6 +157,19 @@ On startup, this app automatically downloads the required files and scripts for 
             </layout>
           </object>
         </child>
+        <child>
+          <object class="customtkinter.CTkTextbox" id="app_pred_history" named="True">
+            <property name="height">75</property>
+            <property name="state">disabled</property>
+            <property name="text" translatable="yes">Your last five prediction results will be stored here.</property>
+            <layout manager="pack">
+              <property name="expand">true</property>
+              <property name="fill">both</property>
+              <property name="padx">10</property>
+              <property name="pady">10</property>
+            </layout>
+          </object>
+        </child>
       </object>
     </child>
   </object>
