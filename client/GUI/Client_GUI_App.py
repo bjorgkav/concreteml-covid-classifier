@@ -157,9 +157,9 @@ class ClientTkinterUiDesignApp:
         self.app_pred_history.configure(state="normal")
         if(delete_switch):
             self.app_pred_history.delete("1.0", END) #tk.END
-            self.app_pred_history.insert("0.0", f"{string}\n\n")
+            self.app_pred_history.insert("0.0", f"{string}\n")
         else:
-            self.app_pred_history.insert(INSERT, f"{string}\n\n")
+            self.app_pred_history.insert(INSERT, f"{string}\n")
         self.app_pred_history.see(END)
         self.app_pred_history.configure(state="disabled")
 
