@@ -163,6 +163,16 @@ class ClientTkinterUiDesignApp:
         self.app_pred_history.see(END)
         self.app_pred_history.configure(state="disabled")
 
+    def get_size(self, file_path, unit='bytes'):
+        file_size = os.path.getsize(file_path)
+        exponents_map = {'bytes': 0, 'kb': 1, 'mb': 2, 'gb': 3}
+        if unit not in exponents_map:
+            raise ValueError("Must select from \
+            ['bytes', 'kb', 'mb', 'gb']")
+        else:
+            size = file_size / 1024 ** exponents_map[unit]
+            return round(size, 3)
+
     def processData(self):
         self.writeOutput("", True)
         self.beginDashing()
@@ -283,6 +293,19 @@ class ClientTkinterUiDesignApp:
 
             self.writeOutput("Saved encrypted inputs and key files to 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' respectively.\nPlease do not move these files until after prediction.")
 
+            # Check MB size with sys of the encrypted data vs clear data
+            clear_input_path = os.path.join(os.path.dirname(__file__), "output.csv")
+            encrypted_input_path = os.path.join(os.path.dirname(__file__), enc_filename)
+            clear_input_size = self.get_size(clear_input_path, 'kb')
+            encrypted_input_size = self.get_size(encrypted_input_path, 'kb')
+            print(f"Clear input size: {clear_input_size} kB")
+            print(f"Encrypted input size: {encrypted_input_size} kB ")
+            print(
+                f"Encrypted data is "
+                f"{((encrypted_input_size - clear_input_size)/clear_input_size)*100:.4f}%"
+                " times larger than the clear data"
+            )
+            
             app_url = "http://localhost:8000"
 
             client = requests.session()
@@ -357,6 +380,14 @@ class ClientTkinterUiDesignApp:
         
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
+
+        eval_key_size = self.get_size("./serialized_evaluation_keys.ekl", 'kb')
+        print(f"Evaluation key size: {eval_key_size} kB")
+
+        # Check the size of the evaluation keys (in MB)
+        priv_key_size = self.get_size("./keys", 'kb')
+        print(f"Private key size: {priv_key_size-eval_key_size} kB")
+
         return filename
 
     def dropColumns(self, dashing_output, file = os.path.join(os.path.dirname(__file__), "selected_features.txt")):
