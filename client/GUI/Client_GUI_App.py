@@ -386,7 +386,7 @@ class ClientTkinterUiDesignApp:
 
         # Check the size of the evaluation keys (in MB)
         priv_key_size = self.get_size("./keys", 'kb')
-        print(f"Private key size: {priv_key_size-eval_key_size} kB")
+        print(f"Private key size: {priv_key_size} kB")
 
         return filename
 
