@@ -348,7 +348,7 @@ class ClientTkinterUiDesignApp:
         if request_output.ok:
             self.writeOutput(f"Response Code {request_output.status_code}: Classification completed!")
 
-            if("test.zip" in os.listdir(os.path.dirname(__file__))): os.remove(os.path.join(os.path.dirname(__file__), "test.zip"), timeout=(10, 10))
+            #if("test.zip" in os.listdir(os.path.dirname(__file__))): os.remove(os.path.join(os.path.dirname(__file__), "test.zip"), timeout=(10, 10))
 
             with open(os.path.join(os.path.dirname(__file__), "predictions/enc_predictions.zip"), "wb") as z:
                 z.write(request_output.content)
@@ -466,17 +466,39 @@ class ClientTkinterUiDesignApp:
     def useDashing(self):
         """Calls the appropriate shell scripts (dashingShell.sh) and files after giving them execution permissions."""
 
-        #grant execution permissions
-        st = os.stat('dashingShell.sh')
-        os.chmod('dashingShell.sh', st.st_mode | stat.S_IEXEC)
+        files_to_allow = [
+            'dashingShell512.sh',
+            'dashing_s512',
+            'readHLLandWrite512.sh',
+            'dashingShell256.sh',
+            'dashing_s256',
+            'readHLLandWrite256.sh',
+            'dashingShell128.sh',
+            'dashing_s128',
+            'readHLLandWrite128.sh',
+        ]
 
-        st = os.stat('dashing_s512')
-        os.chmod('dashing_s512', st.st_mode | stat.S_IEXEC)
+        for f in files_to_allow:
+            st = os.stat(f)
+            os.chmod(f, st.st_mode | stat.S_IEXEC)
 
-        st = os.stat('readHLLandWrite.sh')
-        os.chmod('readHLLandWrite.sh', st.st_mode | stat.S_IEXEC)
+        #subprocess.call(['sh', "dashingShell.sh"])
 
-        subprocess.call(['sh', "dashingShell.sh"])
+        #calls the shell script and returns CalledProcessError if an exit code is not zero
+        try:
+            subprocess_output = subprocess.check_output(['sh', 'dashingShell512.sh'])
+        except subprocess.CalledProcessError as e:
+            print(f"Error running default dashing_s512: {'OS must support AVX512BW instructions' if 'Illegal Instruction' in e.output else e.output}.")
+            print("Trying dashing_s256...")
+            try:
+                subprocess_output = subprocess.check_output(['sh', 'dashingShell256.sh'])
+            except subprocess.CalledProcessError as e:
+                print(f"Error running default dashing_s256: {'OS must support AVX2 instructions' if 'Illegal Instruction' in e.output else e.output}.")
+                print("Trying dashing_s128...")
+                try:
+                    subprocess_output = subprocess.check_output(['sh', 'dashingShell128.sh'])
+                except subprocess.CalledProcessError as e:
+                    print(f"Error running all dashing binaries: {'OS must support SSE2 instructions' if 'Illegal Instruction' in e.output else e.output}")
 
     def beginDecryption(self):
         try:
@@ -530,8 +552,6 @@ class ClientTkinterUiDesignApp:
     def savePredictionResult(self):
         # save as individual and then add to cache.csv
         #self.ensureCacheExists()
-        # cache_name = os.path.join(os.path.dirname(__file__), f"predictions/cache.csv")
-        # cache_df = read_csv(cache_name)
 
         for dict in self.data_dictionary.values():
             print(dict)
@@ -539,23 +559,6 @@ class ClientTkinterUiDesignApp:
             #df = df.rename(columns={'id':'Accession ID', 'result':'Lineage'})
             output_name = f"prediction_result_{dict['id']}_{date.today()}.csv"
             df.to_csv(os.path.join(os.path.dirname(__file__), f"predictions/{output_name}"), index=False, header=True)
-        
-            # add your results into cache.csv
-            # Open the CSV file in "append" mode
-            # with open(cache_name, 'a', newline='') as f:
-            #     if(dict['id'] not in set(cache_df['id'])):
-            #         # Create a dictionary writer with the dict keys as column fieldnames
-            #         writer = csv.DictWriter(f, fieldnames=dict.keys())
-            #         # Append single row to CSV
-            #         writer.writerow(dict)
-
-    # def ensureCacheExists(self):
-    #     # ensure "cache.csv" created in predictions folder
-    #     cache_name = os.path.join(os.path.dirname(__file__), f"predictions/cache.csv")
-    #     if not os.path.exists(cache_name):
-    #         cache_df = pd(data={'id':[], 'result':[]})
-    #         cache_df.to_csv(cache_name, index=False, header=True)
-
 #endregion
 
 #region functions outside the class
@@ -563,8 +566,16 @@ class ClientTkinterUiDesignApp:
 def getRequiredFiles():
     files = [
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashingShell512.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite512.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s128",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s256",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell128.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite128.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell256.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite256.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
         ]
