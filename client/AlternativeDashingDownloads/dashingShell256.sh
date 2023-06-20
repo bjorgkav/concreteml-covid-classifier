@@ -9,6 +9,11 @@ echo "Running Dashing tool..."
 
 ./dashing_s256 sketch -k31 -p13 -S9 fastas/*.fasta
 
+if [ $? -ne 0 ]; then
+    echo "Error encountered using this dashing binary. Use a different binary."
+    exit 1
+fi
+
 echo "Reading output and Creating CSV..."
 
 ./readHLLandWrite256.sh #(requires chmod +x readHLLandWrite.sh for execution permissions)
