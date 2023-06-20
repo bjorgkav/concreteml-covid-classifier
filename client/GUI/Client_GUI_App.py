@@ -566,18 +566,18 @@ class ClientTkinterUiDesignApp:
 def getRequiredFiles():
     files = [
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashingShell512.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite512.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell512.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashingShell128.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashingShell256.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite512.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite128.sh",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite256.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s128",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s256",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell128.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite128.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell256.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite256.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
         ]
     for file in files:
         print(file.split("/")[-1].replace("%20", " "))
