@@ -486,19 +486,19 @@ class ClientTkinterUiDesignApp:
 
         #calls the shell script and returns CalledProcessError if an exit code is not zero
         try:
-            subprocess_output = subprocess.check_output(['sh', 'dashingShell512.sh'])
+            subprocess.check_output(['sh', 'dashingShell512.sh'])
         except subprocess.CalledProcessError as e:
-            print(f"Error running default dashing_s512: {'OS must support AVX512BW instructions' if 'Illegal Instruction' in e.output else e.output}.")
+            print(f"Error running default dashing_s512: {'OS must support AVX512BW instructions'}.")
             print("Trying dashing_s256...")
             try:
-                subprocess_output = subprocess.check_output(['sh', 'dashingShell256.sh'])
+                subprocess.check_output(['sh', 'dashingShell256.sh'])
             except subprocess.CalledProcessError as e:
-                print(f"Error running default dashing_s256: {'OS must support AVX2 instructions' if 'Illegal Instruction' in e.output else e.output}.")
+                print(f"Error running default dashing_s256: {'OS must support AVX2 instructions.'}")
                 print("Trying dashing_s128...")
                 try:
-                    subprocess_output = subprocess.check_output(['sh', 'dashingShell128.sh'])
+                    subprocess.check_output(['sh', 'dashingShell128.sh'])
                 except subprocess.CalledProcessError as e:
-                    print(f"Error running all dashing binaries: {'OS must support SSE2 instructions' if 'Illegal Instruction' in e.output else e.output}")
+                    print(f"Error running all dashing binaries: {'OS must support SSE2 instructions'}")
 
     def beginDecryption(self):
         try:
