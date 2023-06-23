@@ -20,6 +20,7 @@ from concrete.ml.deployment import FHEModelClient
 import os, requests, stat, numpy, traceback
 from pandas import DataFrame as pd
 from pandas import read_csv
+from sklearn.preprocessing import LabelEncoder
 
 #region class
 class ClientTkinterUiDesignApp:
@@ -510,8 +511,14 @@ class ClientTkinterUiDesignApp:
 
             decrypted_predictions = []
 
-            classes_dict = {0: 'B.1.1.529 (Omicron)', 1: 'B.1.617.2 (Delta)', 2: 'B.1.621 (Mu)', 3: 'C.37 (Lambda)'}
-            
+            #setting classes dictionary
+            try:
+                le = LabelEncoder()
+                le.classes_ = numpy.load(os.path.join(os.path.dirname(__file__), "classes.npy"), allow_pickle=True)
+                classes_dict = {list(le.classes_).index(item): item for item in le.classes_}
+            except:
+                classes_dict = {0: 'B.1.1.529 (Omicron)', 1: 'B.1.617.2 (Delta)', 2: 'B.1.621 (Mu)', 3: 'C.37 (Lambda)'}
+
             pred_folder = os.path.join(os.path.dirname(__file__), "predictions")
 
             zip_name = self.decrypt_name_var.get() #os.path.join(pred_folder, "enc_predictions.zip") if os.listdir(pred_folder) else os.path.join(os.path.dirname(__file__), "enc_predictions.zip")
@@ -580,6 +587,7 @@ def getRequiredFiles():
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s128",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s256",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/classes.npy",
         ]
     for file in files:
         print(file.split("/")[-1].replace("%20", " "))
