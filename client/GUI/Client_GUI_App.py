@@ -509,7 +509,9 @@ class ClientTkinterUiDesignApp:
             self.writeOutput("Beginning decryption of encrypted predictions recieved from server...")
 
             decrypted_predictions = []
+
             classes_dict = {0: 'B.1.1.529 (Omicron)', 1: 'B.1.617.2 (Delta)', 2: 'B.1.621 (Mu)', 3: 'C.37 (Lambda)'}
+            
             pred_folder = os.path.join(os.path.dirname(__file__), "predictions")
 
             zip_name = self.decrypt_name_var.get() #os.path.join(pred_folder, "enc_predictions.zip") if os.listdir(pred_folder) else os.path.join(os.path.dirname(__file__), "enc_predictions.zip")
