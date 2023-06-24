@@ -408,7 +408,7 @@ class ClientTkinterUiDesignApp:
         with open(fasta_fpath, "r") as f:
             for line in f.readlines(): #chunks() method is essentially opening the file in binary mode.
                 if ">" not in line:
-
+                    #print("sequence line")
                     #print(f"New chunk: {line[-1]}")
 
                     to_add = line.strip().replace('\n', '')
@@ -417,8 +417,12 @@ class ClientTkinterUiDesignApp:
                     truncated_seq += to_add
                 else:
                     print("> found.")
-                    first_line = line
-                    id = line.split("|")[1].strip().replace('EPI_ISL_', '')
+                    if("hCoV" not in line):
+                        first_line = line
+                        id = line.split(" ")[0].strip().replace('>', '')
+                    else:
+                        first_line = line
+                        id = line.split("|")[1].strip() #line.split("|")[1].strip().replace('EPI_ISL_', '')
 
         decoded_truncated_seq = truncated_seq[20000:]
 
@@ -437,8 +441,12 @@ class ClientTkinterUiDesignApp:
                 truncated_seq += to_add
             else:
                 print("> found.")
-                first_line = line
-                id = line.split(b"|")[1].strip().replace(b'EPI_ISL_', b'').decode()
+                if(b"|" not in line):
+                    first_line = line
+                    id = line.split(b" ")[0].strip().replace(b">", b"").decode()
+                else:
+                    first_line = line
+                    id = line.split(b"|")[1].strip().decode() #line.split(b"|")[1].strip().replace(b'EPI_ISL_', b'').decode()
 
         decoded_truncated_seq = truncated_seq[20000:]
 
