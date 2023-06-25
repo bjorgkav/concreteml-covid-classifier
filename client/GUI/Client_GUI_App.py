@@ -417,7 +417,8 @@ class ClientTkinterUiDesignApp:
                     truncated_seq += to_add
                 else:
                     print("> found.")
-                    if("hCoV" not in line):
+                    if("|" not in line):
+                        self.writeOutput("Warning: Please follow the recommended input file structure: >Reference/Database|AccessionID|DateCollected")
                         first_line = line
                         id = line.split(" ")[0].strip().replace('>', '')
                     else:

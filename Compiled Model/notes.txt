@@ -1,2 +1,0 @@
-test size was 40%
-compiled and saved using concrete-ml on google colab (versions seen in the versions.json)
