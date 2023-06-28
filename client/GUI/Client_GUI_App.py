@@ -300,13 +300,13 @@ class ClientTkinterUiDesignApp:
             encrypted_input_path = os.path.join(os.path.dirname(__file__), enc_filename)
             clear_input_size = self.get_size(clear_input_path, 'kb')
             encrypted_input_size = self.get_size(encrypted_input_path, 'kb')
-            print(f"Clear input size: {clear_input_size} kB")
-            print(f"Encrypted input size: {encrypted_input_size} kB ")
-            print(
-                f"Encrypted data is "
-                f"{((encrypted_input_size - clear_input_size)/clear_input_size)*100:.4f}%"
-                " times larger than the clear data"
-            )
+            #print(f"Clear input size: {clear_input_size} kB")
+            #print(f"Encrypted input size: {encrypted_input_size} kB ")
+            #print(
+            #    f"Encrypted data is "
+            #    f"{((encrypted_input_size - clear_input_size)/clear_input_size)*100:.4f}%"
+            #    " times larger than the clear data"
+            #)
             
             app_url = "http://localhost:8000"
 
@@ -394,9 +394,12 @@ class ClientTkinterUiDesignApp:
 
     def getFeaturesAndClasses(self, file = os.path.join(os.path.dirname(__file__), "features_and_classes.txt")):
         with open(file, "r") as fc_file:
-            dictionary = json.loads(fc_file.read())
+            dictionary = json.loads(fc_file.readline())
             self.selected_features = dictionary["features"]
             self.classes_labels = dictionary["classes"]
+            self.classes_labels = {int(key):value for key, value in self.classes_labels.items()}
+            print(self.selected_features)
+            print(self.classes_labels)
 
     def dropColumns(self, dashing_output):
 
@@ -421,7 +424,7 @@ class ClientTkinterUiDesignApp:
 
                     truncated_seq += to_add
                 else:
-                    print("> found.")
+                    #print("> found.")
                     if("|" not in line):
                         self.writeOutput("Warning: Please follow the recommended input file structure: >Reference/Database|AccessionID|DateCollected")
                         first_line = line
@@ -521,17 +524,17 @@ class ClientTkinterUiDesignApp:
         try:
             subprocess.check_output(['sh', 'dashingShell512.sh'])
         except subprocess.CalledProcessError as e:
-            print(f"Error running default dashing_s512: {'OS must support AVX512BW instructions'}.")
-            print("Trying dashing_s256...")
+            self.writeOutput(f"Error running default dashing_s512: {'OS must support AVX512BW instructions'}.")
+            self.writeOutput("Trying dashing_s256...")
             try:
                 subprocess.check_output(['sh', 'dashingShell256.sh'])
             except subprocess.CalledProcessError as e:
-                print(f"Error running default dashing_s256: {'OS must support AVX2 instructions.'}")
-                print("Trying dashing_s128...")
+                self.writeOutput(f"Error running default dashing_s256: {'OS must support AVX2 instructions.'}")
+                self.writeOutput("Trying dashing_s128...")
                 try:
                     subprocess.check_output(['sh', 'dashingShell128.sh'])
                 except subprocess.CalledProcessError as e:
-                    print(f"Error running all dashing binaries: {'OS must support SSE2 instructions'}")
+                    self.writeOutput(f"Error running all dashing binaries: {'OS must support SSE2 instructions'}")
 
     def beginDecryption(self):
         try:
