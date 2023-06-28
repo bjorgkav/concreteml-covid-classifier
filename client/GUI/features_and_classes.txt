@@ -1,0 +1,1 @@
+{"features":[feature_cols[col] for col in col_idxs], "classes":{classes_list.index(x):x for x in classes_list}}
