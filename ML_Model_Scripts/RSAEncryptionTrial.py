@@ -1,17 +1,24 @@
-import rsa, os
+import rsa, os, pandas, numpy
+from pandas import DataFrame, read_csv
 
-def generateKeys(bits = 1024):
+def generateKeys(bits):
     (publicKey, privateKey) = rsa.newkeys(bits)
-    with open('publicKey.pem', 'wb') as p:
+    filename = "publicKey.pem"
+    with open(os.path.join(os.path.dirname(__file__), filename), 'wb') as p:
         p.write(publicKey.save_pkcs1('PEM'))
-    with open('privateKey.pem', 'wb') as p:
+    filename = "privateKey.pem"
+    with open(os.path.join(os.path.dirname(__file__), filename), 'wb') as p:
         p.write(privateKey.save_pkcs1('PEM'))
+    # with open('rsa_keys/privateKey.pem', 'wb') as p:
+    #     p.write(privateKey.save_pkcs1('PEM'))
 
 def loadKeys():
     with open('publicKey.pem', 'rb') as p:
         publicKey = rsa.PublicKey.load_pkcs1(p.read())
+        # p.write(publicKey)
     with open('privateKey.pem', 'rb') as p:
         privateKey = rsa.PrivateKey.load_pkcs1(p.read())
+        # p.write(privateKey)
     return privateKey, publicKey
 
 def encrypt(message, key):
@@ -41,39 +48,45 @@ def get_size(file_path, unit='bytes'):
         else:
             size = file_size / 1024 ** exponents_map[unit]
             return round(size, 3)
+    
+# if not os.path.exists("rsa_keys"): os.mkdir(os.path.join(os.path.dirname(__file__), "rsa_keys"))
 
 generateKeys(3072)
 privateKey, publicKey = loadKeys()
 
-message = "Sample messagwserdtcvfgybuhnijmoke"
+file_path=os.path.join(os.path.dirname(__file__), "b.1.1.529output5.csv")
+clear_size = get_size(file_path, 'kb')
+print("Clear size (kB): ", clear_size)
 
-ciphertext = encrypt(message, publicKey)
-signature = sign(message, privateKey)
-text = decrypt(ciphertext, privateKey)
+ciphertext = []
+clear_input = open(file_path, "r")
+for line in clear_input.readlines():
+    encrypted_input = encrypt(line, publicKey)
+    ciphertext.append(encrypted_input)
+
+# message = "encryptsdfgdsfsdfsdfsdfedsffedsfsdfdsfddffdsffd"
+
+# ciphertext = encrypt(message, publicKey)
+# signature = sign(message, privateKey)
+# text = decrypt(ciphertext, privateKey)
 
 # print(f'Cipher text: {ciphertext}')
 # print(f'Signature: {signature}')
 
-with open(os.path.join(os.path.dirname(__file__), 'encrypted_input.txt'), "wb") as f:
-    f.write(ciphertext)
+filename = "encrypted_input.txt"
+with open(os.path.join(os.path.dirname(__file__), filename), "wb") as enc_file:
+    for line in ciphertext:
+        enc_file.write(line)
+    # enc_file.write(ciphertext)
 
-print(f"size of RSA-encrypted message \"{message}\" : {get_size(os.path.join(os.path.dirname(__file__), 'encrypted_input.txt'),'kb')} kB")
+file_path=os.path.join(os.path.dirname(__file__), "encrypted_input.txt")
+cipher_size = get_size(file_path, 'kb')
+print("Ciphertext size (kB): ", cipher_size)
 
+file_path=os.path.join(os.path.dirname(__file__), "publicKey.pem")
+pub_size = get_size(file_path, 'kb')
+print("Pubkey size (kB): ", pub_size)
 
-message = "other sample messageextfcygvubhinjkml"
-
-ciphertext = encrypt(message, publicKey)
-signature = sign(message, privateKey)
-text = decrypt(ciphertext, privateKey)
-
-print(f"size of RSA-encrypted message \"{message}\" : {get_size(os.path.join(os.path.dirname(__file__), 'encrypted_input.txt'),'kb')} kB")
-
-# if text:
-#     print(f'Message text: {text}')
-# else:
-#     print(f'Unable to decrypt the message.')
-
-# if verify(text, signature, publicKey):
-#     print("Successfully verified signature")
-# else:
-#     print('The message signature could not be verified')
+file_path=os.path.join(os.path.dirname(__file__), "privateKey.pem")
+priv_size = get_size(file_path, 'kb')
+print("Privkey size (kB): ", priv_size)

@@ -17,7 +17,7 @@ from tkinter import filedialog as fd
 from tkinter import END, INSERT
 from datetime import date, datetime
 from concrete.ml.deployment import FHEModelClient
-import os, requests, stat, numpy, traceback
+import os, requests, stat, numpy, json
 from pandas import DataFrame as pd
 from pandas import read_csv
 from sklearn.preprocessing import LabelEncoder
@@ -175,6 +175,7 @@ class ClientTkinterUiDesignApp:
             return round(size, 3)
 
     def processData(self):
+        self.getFeaturesAndClasses()
         self.writeOutput("", True)
         self.beginDashing()
         self.beginEncryption()
@@ -391,11 +392,15 @@ class ClientTkinterUiDesignApp:
 
         return filename
 
-    def dropColumns(self, dashing_output, file = os.path.join(os.path.dirname(__file__), "selected_features.txt")):
-        with open(file, "r") as feature_file:
-            features = [feature.strip() for feature in feature_file.readlines()]
-        #print("Selected features:", features)
+    def getFeaturesAndClasses(self, file = os.path.join(os.path.dirname(__file__), "features_and_classes.txt")):
+        with open(file, "r") as fc_file:
+            dictionary = json.loads(fc_file.read())
+            self.selected_features = dictionary["features"]
+            self.classes_labels = dictionary["classes"]
 
+    def dropColumns(self, dashing_output):
+
+        features = self.selected_features
         feature_list = ["Accession ID"] + features
 
         drop_df = read_csv(dashing_output)
@@ -473,24 +478,42 @@ class ClientTkinterUiDesignApp:
             output_file.write(first_line)
             output_file.write(sequence)
 
+    def verifyDashingIntegrity(self, list):
+        for dashing_file in list:
+            try:
+                mb_size = os.stat(dashing_file).st_size / (1024*1024)
+                if(mb_size < 18): #less than 18 mb
+                    raise Exception("Dashing files may not have been downloaded correctly. Redownloading the files...")
+            except Exception as e:
+                self.writeOutput(str(e))
+                getRequiredFiles()
+
     def useDashing(self):
         """Calls the appropriate shell scripts (dashingShell.sh) and files after giving them execution permissions."""
 
         files_to_allow = [
-            'dashingShell512.sh',
-            'dashing_s512',
-            'readHLLandWrite512.sh',
-            'dashingShell256.sh',
-            'dashing_s256',
-            'readHLLandWrite256.sh',
-            'dashingShell128.sh',
-            'dashing_s128',
-            'readHLLandWrite128.sh',
+            os.path.join(os.path.dirname(__file__),'dashingShell512.sh'),
+            os.path.join(os.path.dirname(__file__),'dashing_s512'),
+            os.path.join(os.path.dirname(__file__),'readHLLandWrite512.sh'),
+            os.path.join(os.path.dirname(__file__),'dashingShell256.sh'),
+            os.path.join(os.path.dirname(__file__),'dashing_s256'),
+            os.path.join(os.path.dirname(__file__),'readHLLandWrite256.sh'),
+            os.path.join(os.path.dirname(__file__),'dashingShell128.sh'),
+            os.path.join(os.path.dirname(__file__),'dashing_s128'),
+            os.path.join(os.path.dirname(__file__),'readHLLandWrite128.sh'),
+        ]
+
+        files_to_verify = [
+            os.path.join(os.path.dirname(__file__),'dashing_s512'),
+            os.path.join(os.path.dirname(__file__),'dashing_s256'),
+            os.path.join(os.path.dirname(__file__),'dashing_s128'),
         ]
 
         for f in files_to_allow:
             st = os.stat(f)
             os.chmod(f, st.st_mode | stat.S_IEXEC)
+
+        self.verifyDashingIntegrity(files_to_verify)
 
         #subprocess.call(['sh', "dashingShell.sh"])
 
@@ -522,9 +545,7 @@ class ClientTkinterUiDesignApp:
 
             #setting classes dictionary
             try:
-                le = LabelEncoder()
-                le.classes_ = numpy.load(os.path.join(os.path.dirname(__file__), "classes.npy"), allow_pickle=True)
-                classes_dict = {list(le.classes_).index(item): item for item in le.classes_}
+                classes_dict = self.classes_labels
             except:
                 classes_dict = {0: 'B.1.1.529 (Omicron)', 1: 'B.1.617.2 (Delta)', 2: 'B.1.621 (Mu)', 3: 'C.37 (Lambda)'}
 
@@ -556,7 +577,7 @@ class ClientTkinterUiDesignApp:
             self.writeOutput("Prediction Results:")
             for dictionary in self.data_dictionary.values():
                 self.writeOutput(f"ID {dictionary['id']}: {dictionary['result']}")
-                self.writePredOutput(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} -- ID {dictionary['id']}: {dictionary['result']}")
+                self.writePredOutput(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} -- ID {dictionary['id']}: {dictionary['result']}")
 
             self.writeOutput("Saving prediction results to output file...")
             #create a file to save the prediction into
@@ -581,7 +602,7 @@ class ClientTkinterUiDesignApp:
 
 #region functions outside the class
 
-def getRequiredFiles():
+def getRequiredFiles(force = False):
     files = [
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
@@ -593,14 +614,15 @@ def getRequiredFiles():
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite128.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite256.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
+        #r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
+        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/features_and_classes.txt",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s128",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s256",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/classes.npy",
         ]
     for file in files:
         print(file.split("/")[-1].replace("%20", " "))
-        if file.split("/")[-1].replace("%20", " ") not in os.listdir(os.path.dirname(__file__)):
+        if (file.split("/")[-1].replace("%20", " ") not in os.listdir(os.path.dirname(__file__))) or force:
             download(file, os.path.dirname(__file__))
     
 def download(url, dest_folder):
