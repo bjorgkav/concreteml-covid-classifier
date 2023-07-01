@@ -78,7 +78,7 @@ class ClientTkinterUiDesignApp:
         self.description_label = CTkLabel(self.description_frame)
         self.description_label.configure(
             justify="left",
-            text='This tool allows clients to conver their FASTA files to a numerical format and encrypt them for classification \non the server-side application. \n\nOn startup, this app automatically downloads the required files and scripts for operations \n(est. size 50 MB, internet connection required).')
+            text='This tool allows clients to convert their FASTA files to a numerical format and encrypt them for classification \non the server-side application. \n\nOn startup, this app automatically downloads the required files and scripts for operations \n(est. size 50 MB, internet connection required).')
         self.description_label.pack(expand=False, fill="x", side="top")
         self.description_frame.pack(
             fill="both", ipady=10, padx=20, pady=20, side="top")
@@ -106,7 +106,7 @@ class ClientTkinterUiDesignApp:
         self.dashing_begin = CTkButton(self.dashing_frame)
         self.dashing_begin.configure(
             hover_color="#299cd9",
-            text='Submit for FHE Classificaiton',
+            text='Submit for FHE Classification',
             width=300)
         self.dashing_begin.grid(column=0, columnspan=3, pady=10, row=2)
         self.dashing_begin.configure(command=self.processData)
@@ -203,26 +203,7 @@ class ClientTkinterUiDesignApp:
             self.writeOutput("Beginning Dashing...", False)
         
             filename = self.dashing_name_var.get()
-
-            if filename.endswith(".zip"):
-                # with zipfile.ZipFile(filename, "r") as zObject:
-                #     for file in zObject.namelist():
-                #         opened_file = zObject.open(file, "r")
-                #         first_line, sequence, id = self.readTruncateZipSequence(opened_file.readlines())
-                #         self.writeFastaBytes(id, first_line, sequence)
-                    
-                #     self.useDashing()
-
-                #     self.writeOutput("Writing dashed sequences to output.csv in the current directory...")
-
-                #     dashing_output = os.path.join(os.path.dirname(__file__), f"output.csv")
-                #     self.dropColumns(dashing_output)
-                #     self.encrypt_name_var.set(dashing_output)
-
-                #     self.writeOutput("Dashing Completed!")
-                raise Exception("ZIP file inputs for this application are still in development.")
-
-            elif filename.endswith(".fasta"):
+            if filename.endswith(".fasta"):
                 first_line, sequence, id = self.readTruncateSequence(filename)
                 self.writeFasta(id, first_line, sequence)
                 self.useDashing()
@@ -237,8 +218,7 @@ class ClientTkinterUiDesignApp:
             else:
                 raise Exception("Invalid file type: supported file types include .fasta, .zip")
         except Exception as e:
-            #self.writeOutput(f"Error: {str(e)}")
-            self.writeOutput(traceback.format_exc())
+            self.writeOutput(f"Error: {str(e)}")
 
     def beginEncryption(self):
         """Function to begin the encryption of the user's dashed SARS-CoV-2 sequences. Expects 'self.encrypt_name_var' to point to the CSV file containing dashed sequences. Outputs a text file and .ekl file for the encrypted inputs and serialized evaluation keys respectively in this app's directory."""
@@ -250,8 +230,6 @@ class ClientTkinterUiDesignApp:
 
             if(not self.encrypt_name_var.get().endswith(".csv")):
                 raise Exception("Invalid file type. Only .csv files are supported.")
-            
-            #self.ensureCacheExists()
 
             self.writeOutput("Generating Keys...", False)
 
@@ -260,7 +238,7 @@ class ClientTkinterUiDesignApp:
             self.writeOutput("Key generation complete! Key files written to folder inside 'keys' directory.")
 
             self.writeOutput("Beginning encryption...")
-            #dashing_output = os.path.join(os.path.dirname(__file__), "output.csv")
+
             dashing_output = self.encrypt_name_var.get()
             df = read_csv(dashing_output)
             arr_no_id = df.drop(columns=['Accession ID']).to_numpy(dtype="uint16")
@@ -276,18 +254,13 @@ class ClientTkinterUiDesignApp:
             #print(self.data_dictionary)
             for row in range(0, arr_no_id.shape[0]):
                 self.encrypted_id = self.data_dictionary[row]['id']
-                #clear_input = arr[:,1:]
                 clear_input = arr_no_id[[row],:]
 
-                #print(clear_input)
                 encrypted_input = self.fhe_model_client.quantize_encrypt_serialize(clear_input)
                 self.writeOutput(f"New row encrypted of {type(encrypted_input)}; adding to list of encrypted values...")
                 encrypted_rows.append(encrypted_input)
             
             self.encrypted_rows = encrypted_rows
-            
-            # for row in encrypted_rows:
-            #     print("Row: ", row[:10])
 
             self.writeOutput(f"Encryption complete! Here are the first 15 character of your encrypted output:\n{encrypted_rows[0][0:16]}")
 
@@ -300,6 +273,7 @@ class ClientTkinterUiDesignApp:
             encrypted_input_path = os.path.join(os.path.dirname(__file__), enc_filename)
             clear_input_size = self.get_size(clear_input_path, 'kb')
             encrypted_input_size = self.get_size(encrypted_input_path, 'kb')
+
             #print(f"Clear input size: {clear_input_size} kB")
             #print(f"Encrypted input size: {encrypted_input_size} kB ")
             #print(
@@ -322,7 +296,7 @@ class ClientTkinterUiDesignApp:
             self.writeOutput(f"Error: {traceback.format_exc()}")
 
     def sendEncryptRequestToServer(self, encrypt_filename, client):
-        """Sends 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' (expected to be located in the same directory as the app) to the server-side app through the Python requests library. URL is currently set to localhost:8000 for development purposes."""
+        """Sends 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' (expected to be located in the same directory as the app) to the server-side app through the Python requests library. URL is set to localhost:8000 in development."""
         
         app_url = "http://localhost:8000"
 
@@ -332,8 +306,6 @@ class ClientTkinterUiDesignApp:
         else:
             # older versions
             csrftoken = client.cookies['csrf']
-
-        #self.writeOutput(f"{type(self.encrypted_rows)}")
 
         eval_keys_file = open('serialized_evaluation_keys.ekl', "rb")
         inputs_file = open(encrypt_filename, "rb")
@@ -349,8 +321,6 @@ class ClientTkinterUiDesignApp:
 
         if request_output.ok:
             self.writeOutput(f"Response Code {request_output.status_code}: Classification completed!")
-
-            #if("test.zip" in os.listdir(os.path.dirname(__file__))): os.remove(os.path.join(os.path.dirname(__file__), "test.zip"), timeout=(10, 10))
 
             with open(os.path.join(os.path.dirname(__file__), "predictions/enc_predictions.zip"), "wb") as z:
                 z.write(request_output.content)
@@ -374,11 +344,11 @@ class ClientTkinterUiDesignApp:
         self.serialized_evaluation_keys = fhemodel_client.get_serialized_evaluation_keys()
 
     def saveEncryptedOutput(self, id):
+        """Saves encrypted rows as a text file to send to the server for classification."""
         filename = f"{id}_encrypted_input.txt"
         with open(os.path.join(os.path.dirname(__file__), filename), "wb") as enc_file:
             for line in self.encrypted_rows:
                 enc_file.write(line)
-                #enc_file.write(b'\n\n\n\n\n')
         
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
@@ -436,30 +406,6 @@ class ClientTkinterUiDesignApp:
         decoded_truncated_seq = truncated_seq[20000:]
 
         return first_line, decoded_truncated_seq, id
-    
-    def readTruncateZipSequence(self, fasta_readlines):
-        truncated_seq = b""
-        for line in fasta_readlines: #chunks() method is essentially opening the file in binary mode.
-            if b">" not in line:
-
-                #print(f"New chunk: {line[-1]}")
-
-                to_add = line.decode().strip().replace('\n', '').encode()
-                #print(f"New line found: {to_add.decode()}")
-
-                truncated_seq += to_add
-            else:
-                print("> found.")
-                if(b"|" not in line):
-                    first_line = line
-                    id = line.split(b" ")[0].strip().replace(b">", b"").decode()
-                else:
-                    first_line = line
-                    id = line.split(b"|")[1].strip().decode() #line.split(b"|")[1].strip().replace(b'EPI_ISL_', b'').decode()
-
-        decoded_truncated_seq = truncated_seq[20000:]
-
-        return first_line, decoded_truncated_seq, id
 
     def writeFastaBytes(self, id, first_line, sequence):
         """Writes a .fasta BYTES file in the 'fastas' folder named after the fasta's ID and containing the truncated sequence."""
@@ -482,6 +428,7 @@ class ClientTkinterUiDesignApp:
             output_file.write(sequence)
 
     def verifyDashingIntegrity(self, list):
+        """Checks if the Dashing files have been downloaded properly. Forces re-download as needed."""
         for dashing_file in list:
             try:
                 mb_size = os.stat(dashing_file).st_size / (1024*1024)
@@ -489,7 +436,7 @@ class ClientTkinterUiDesignApp:
                     raise Exception("Dashing files may not have been downloaded correctly. Redownloading the files...")
             except Exception as e:
                 self.writeOutput(str(e))
-                getRequiredFiles()
+                getRequiredFiles(force_download=True)
 
     def useDashing(self):
         """Calls the appropriate shell scripts (dashingShell.sh) and files after giving them execution permissions."""
@@ -518,8 +465,6 @@ class ClientTkinterUiDesignApp:
 
         self.verifyDashingIntegrity(files_to_verify)
 
-        #subprocess.call(['sh', "dashingShell.sh"])
-
         #calls the shell script and returns CalledProcessError if an exit code is not zero
         try:
             subprocess.check_output(['sh', 'dashingShell512.sh'])
@@ -534,7 +479,7 @@ class ClientTkinterUiDesignApp:
                 try:
                     subprocess.check_output(['sh', 'dashingShell128.sh'])
                 except subprocess.CalledProcessError as e:
-                    self.writeOutput(f"Error running all dashing binaries: {'OS must support SSE2 instructions'}")
+                    self.writeOutput(f"Error running all dashing binaries: {'OS must support AVX512BW, AVX2, or SSE2 instructions'}")
 
     def beginDecryption(self):
         try:
@@ -605,7 +550,7 @@ class ClientTkinterUiDesignApp:
 
 #region functions outside the class
 
-def getRequiredFiles(force = False):
+def getRequiredFiles(force_download = False):
     files = [
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
@@ -617,15 +562,14 @@ def getRequiredFiles(force = False):
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite128.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite256.sh",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
-        #r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/selected_features.txt",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/features_and_classes.txt",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s128",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s256",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/classes.npy",
         ]
     for file in files:
-        print(file.split("/")[-1].replace("%20", " "))
-        if (file.split("/")[-1].replace("%20", " ") not in os.listdir(os.path.dirname(__file__))) or force:
+        parsed_name = file.split("/")[-1].replace("%20", " ")
+        print(f"Checking current directory for file: {parsed_name}")
+        if (parsed_name not in os.listdir(os.path.dirname(__file__))) or force_download:
             download(file, os.path.dirname(__file__))
     
 def download(url, dest_folder):
@@ -652,7 +596,7 @@ def download(url, dest_folder):
 if __name__ == "__main__":
     #download_files = input("Would you like to download the required files? (Type Yes or No.) ")
     
-   # if(download_files.strip() in ["y", "yes", "YES", "Yes"]):
+    #if(download_files.strip().lower() == "yes"):
     getRequiredFiles()
 
     app = ClientTkinterUiDesignApp()

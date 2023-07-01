@@ -24,28 +24,21 @@ def start_classification(request):
     keys_file = request.FILES['keys_file']
     pred_dir = os.path.join(BASE_DIR, "classifier/predictions")
 
-    data = request.FILES['inputs'].read().split(b'\n\n\n\n\n')
-    #del request.session['data_dict']
+    data = request.FILES['inputs'].read().strip()
 
     enc_file_list = []
 
-    print([type(d) for d in data])
-    #print(keys_file.read())
+    print(f"Data received from client is {data[:200]}")
+    count += 1
+    serialized_evaluation_keys = keys_file.read()
+    encrypted_prediction = FHEModelServer(model_path).run(data, serialized_evaluation_keys)
+    pred_file_name = f"encrypted_prediction_{count}.enc"
+    pred_file_path = os.path.join(pred_dir, pred_file_name)
+    with open(pred_file_path, "wb") as f:
+        f.write(encrypted_prediction)
 
-    #print(data)
-
-    for encrypted_input in data:
-        print(encrypted_input[:200])
-        count += 1
-        serialized_evaluation_keys = keys_file.read()
-        encrypted_prediction = FHEModelServer(model_path).run(encrypted_input, serialized_evaluation_keys)
-        pred_file_name = f"encrypted_prediction_{count}.enc"
-        pred_file_path = os.path.join(pred_dir, pred_file_name)
-        with open(pred_file_path, "wb") as f:
-            f.write(encrypted_prediction)
-
-        #send all predictions as a zip file to client
-        enc_file_list.append(pred_file_path)
+    #send all predictions as a zip file to client
+    enc_file_list.append(pred_file_path)
 
     zipfile = create_zip(enc_file_list)
 
