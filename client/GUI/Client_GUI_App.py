@@ -153,7 +153,7 @@ class ClientTkinterUiDesignApp:
         self.app_output.configure(state="disabled")
 
     def writePredOutput(self, string, delete_switch = False):
-        """Function for writing argument 'string' to the app's output window. Set argument 'delete_switch' to True to clear the window before printing."""
+        """Function for writing argument 'string' to the app's prediction output window. Set argument 'delete_switch' to True to clear the window before printing."""
         self.app_pred_history.configure(state="normal")
         if(delete_switch):
             self.app_pred_history.delete("1.0", END) #tk.END
@@ -172,18 +172,6 @@ class ClientTkinterUiDesignApp:
         else:
             size = file_size / 1024 ** exponents_map[unit]
             return round(size, 3)
-        
-    def check_size_comparison(self, clear_input_path, encrypted_input_path, unit = 'kb'):
-        """Checks the size comparison (in the bytes, kb, mb, or gb) between the plaintext and ciphertext."""
-        clear_input_size = self.get_size(clear_input_path, unit)
-        encrypted_input_size = self.get_size(encrypted_input_path, unit)
-
-        print(f"Clear input size: {clear_input_size} {unit}")
-        print(f"Encrypted input size: {encrypted_input_size} {unit}")
-        print(
-        f"Encrypted data is "
-        f"{((encrypted_input_size - clear_input_size)/clear_input_size)*100:.4f}%"
-        " times larger than the clear data")
 
     def processData(self):
         self.getFeaturesAndClasses()
@@ -278,13 +266,6 @@ class ClientTkinterUiDesignApp:
 
             self.writeOutput("Saved encrypted inputs and key files to 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' respectively.\nPlease do not move these files until after prediction.")
 
-            # Check MB size with sys of the encrypted data vs clear data
-            if check_size:
-                clear_input_path = os.path.join(os.path.dirname(__file__), "output.csv")
-                encrypted_input_path = os.path.join(os.path.dirname(__file__), enc_filename)
-
-                self.check_size_comparison(clear_input_path, encrypted_input_path)
-            
             app_url = "http://localhost:8000"
 
             client = requests.session()
@@ -340,14 +321,14 @@ class ClientTkinterUiDesignApp:
 
         fhemodel_client = FHEModelClient(model_dir, key_dir=key_dir)
 
-        # The client first need to create the private and evaluation keys.
+        # The client first needs to create the private and evaluation keys.
         fhemodel_client.generate_private_and_evaluation_keys()
 
         # Get the serialized evaluation keys
         self.serialized_evaluation_keys = fhemodel_client.get_serialized_evaluation_keys()
 
-    def saveEncryptedOutput(self, id):
-        """Saves encrypted rows as a text file to send to the server for classification."""
+    def saveEncryptedOutput(self, id, show_key_sizes = True):
+        """Saves encrypted rows as a text file to send to the server for classification. Also shows key sizes for comparison by default."""
         filename = f"{id}_encrypted_input.txt"
         with open(os.path.join(os.path.dirname(__file__), filename), "wb") as enc_file:
             for line in self.encrypted_rows:
@@ -356,16 +337,18 @@ class ClientTkinterUiDesignApp:
         with open(os.path.join(os.path.dirname(__file__), r'serialized_evaluation_keys.ekl'), "wb") as f:
             f.write(self.serialized_evaluation_keys)
 
-        eval_key_size = self.get_size("./serialized_evaluation_keys.ekl", 'kb')
-        print(f"Evaluation key size: {eval_key_size} kB")
+        if show_key_sizes:
+            eval_key_size = self.get_size("./serialized_evaluation_keys.ekl", 'kb')
+            print(f"Evaluation key size: {eval_key_size} kB")
 
-        # Check the size of the evaluation keys (in MB)
-        priv_key_size = self.get_size("./keys", 'kb')
-        print(f"Private key size: {priv_key_size} kB")
+            # Check the size of the evaluation keys (in MB)
+            priv_key_size = self.get_size("./keys", 'kb')
+            print(f"Private key size: {priv_key_size} kB")
 
         return filename
 
     def getFeaturesAndClasses(self, file = os.path.join(os.path.dirname(__file__), "features_and_classes.txt")):
+        """Parses 'features_and_classes.txt' in the current directory and extracts a dictionary containing the selected features and the original class labels for decryption."""
         with open(file, "r") as fc_file:
             dictionary = json.loads(fc_file.readline())
             self.selected_features = dictionary["features"]
@@ -375,7 +358,7 @@ class ClientTkinterUiDesignApp:
             print(self.classes_labels)
 
     def dropColumns(self, dashing_output):
-
+        """Drops columns from the Dashing output based on the parsed selected features from getFeaturesAndClasses()."""
         features = self.selected_features
         feature_list = ["Accession ID"] + features
 
@@ -384,6 +367,7 @@ class ClientTkinterUiDesignApp:
         drop_df.to_csv("./output.csv", index=False, header=True)
 
     def readTruncateSequence(self, fasta_fpath, verbose = False):
+        """Reads the entire sequence from the input file and truncates it before creating a new FASTA file with the truncated sequence."""
         truncated_seq = ""
 
         with open(fasta_fpath, "r") as f:
@@ -440,7 +424,8 @@ class ClientTkinterUiDesignApp:
                 getRequiredFiles(force_download=True)
 
     def useDashing(self):
-        """Calls the appropriate shell scripts (dashingShell.sh) and files after giving them execution permissions."""
+        """Calls the appropriate shell scripts (dashingShell<bits>.sh) and files after giving them execution permissions. 
+        Takes into account instruction set incompatibility and attempts to use lower-bit binary releases if possible."""
 
         files_to_allow = [
             os.path.join(os.path.dirname(__file__),'dashingShell512.sh'),
@@ -483,10 +468,12 @@ class ClientTkinterUiDesignApp:
                     self.writeOutput(f"Error running all dashing binaries: {'OS must support AVX512BW, AVX2, or SSE2 instructions'}")
 
     def beginDecryption(self):
+        """Begins decryption of the encrypted prediction results received from the server after classification. Expects the input filepath (self.decrypt_name_var) to be a .zip file, and raises an error if not.
+        Also saves the prediction results to a CSV file for viewing later."""
         try:
 
             if not self.decrypt_name_var.get().endswith(".zip"):
-                raise Exception("Invalid file type: Only .zip files are supported.")
+                raise Exception("Invalid file type: Only .zip files are supported. Was there an error the server?")
             
             self.writeOutput("Beginning decryption of encrypted predictions recieved from server...")
 
@@ -534,8 +521,6 @@ class ClientTkinterUiDesignApp:
             self.writeOutput(f"Error: {str(e)}")
         
     def savePredictionResult(self):
-        # save as individual and then add to cache.csv
-
         for dict in self.data_dictionary.values():
             print(dict)
             df = pd.from_dict({key: [str(value).split(" ")[0]] for key, value in dict.items()})
@@ -546,6 +531,9 @@ class ClientTkinterUiDesignApp:
 #region functions outside the class
 
 def getRequiredFiles(force_download = False):
+    """Downloads the required files for the application. Set force_download to True to download the files even if present in the directory. Will be called if the Dashing binaries were not downloaded correctly.
+    
+    By default, targets the project's GitHub repository (see 'files' array) for downloading the files, but can be set to localhost:8000 to download from the local deployment server."""
     files = [
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
@@ -561,6 +549,7 @@ def getRequiredFiles(force_download = False):
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s128",
         r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s256",
         ]
+    
     for file in files:
         parsed_name = file.split("/")[-1].replace("%20", " ")
         print(f"Checking current directory for file: {parsed_name}")
