@@ -17,7 +17,7 @@ from tkinter import filedialog as fd
 from tkinter import END, INSERT
 from datetime import date, datetime
 from concrete.ml.deployment import FHEModelClient
-import os, requests, stat, numpy, json
+import os, requests, stat, numpy, json, traceback
 from pandas import DataFrame as pd
 from pandas import read_csv
 from sklearn.preprocessing import LabelEncoder
@@ -38,7 +38,6 @@ class ClientTkinterUiDesignApp:
             if not os.path.exists(os.path.join(this_folder, f"{name}")):
                 os.mkdir(os.path.join(this_folder, f"{name}"))
 
-        # build ui
         # build ui
         self.root = CTk(None)
         self.root.configure(padx=60, pady=10)
@@ -173,6 +172,18 @@ class ClientTkinterUiDesignApp:
         else:
             size = file_size / 1024 ** exponents_map[unit]
             return round(size, 3)
+        
+    def check_size_comparison(self, clear_input_path, encrypted_input_path, unit = 'kb'):
+        """Checks the size comparison (in the bytes, kb, mb, or gb) between the plaintext and ciphertext."""
+        clear_input_size = self.get_size(clear_input_path, unit)
+        encrypted_input_size = self.get_size(encrypted_input_path, unit)
+
+        print(f"Clear input size: {clear_input_size} {unit}")
+        print(f"Encrypted input size: {encrypted_input_size} {unit}")
+        print(
+        f"Encrypted data is "
+        f"{((encrypted_input_size - clear_input_size)/clear_input_size)*100:.4f}%"
+        " times larger than the clear data")
 
     def processData(self):
         self.getFeaturesAndClasses()
@@ -218,9 +229,9 @@ class ClientTkinterUiDesignApp:
             else:
                 raise Exception("Invalid file type: supported file types include .fasta, .zip")
         except Exception as e:
-            self.writeOutput(f"Error: {str(e)}")
+            self.writeOutput(f"Error: {traceback.format_exc()}")
 
-    def beginEncryption(self):
+    def beginEncryption(self, check_size = False):
         """Function to begin the encryption of the user's dashed SARS-CoV-2 sequences. Expects 'self.encrypt_name_var' to point to the CSV file containing dashed sequences. Outputs a text file and .ekl file for the encrypted inputs and serialized evaluation keys respectively in this app's directory."""
         try:
 
@@ -251,7 +262,6 @@ class ClientTkinterUiDesignApp:
             for id in df['Accession ID']:
                 self.data_dictionary[count] = {'id':id, 'result':''} 
 
-            #print(self.data_dictionary)
             for row in range(0, arr_no_id.shape[0]):
                 self.encrypted_id = self.data_dictionary[row]['id']
                 clear_input = arr_no_id[[row],:]
@@ -269,18 +279,11 @@ class ClientTkinterUiDesignApp:
             self.writeOutput("Saved encrypted inputs and key files to 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' respectively.\nPlease do not move these files until after prediction.")
 
             # Check MB size with sys of the encrypted data vs clear data
-            clear_input_path = os.path.join(os.path.dirname(__file__), "output.csv")
-            encrypted_input_path = os.path.join(os.path.dirname(__file__), enc_filename)
-            clear_input_size = self.get_size(clear_input_path, 'kb')
-            encrypted_input_size = self.get_size(encrypted_input_path, 'kb')
+            if check_size:
+                clear_input_path = os.path.join(os.path.dirname(__file__), "output.csv")
+                encrypted_input_path = os.path.join(os.path.dirname(__file__), enc_filename)
 
-            #print(f"Clear input size: {clear_input_size} kB")
-            #print(f"Encrypted input size: {encrypted_input_size} kB ")
-            #print(
-            #    f"Encrypted data is "
-            #    f"{((encrypted_input_size - clear_input_size)/clear_input_size)*100:.4f}%"
-            #    " times larger than the clear data"
-            #)
+                self.check_size_comparison(clear_input_path, encrypted_input_path)
             
             app_url = "http://localhost:8000"
 
@@ -316,7 +319,7 @@ class ClientTkinterUiDesignApp:
 
         self.writeOutput("Waiting for server's response...")
 
-        #code to send the above files to "localhost:8000/{function_name}"
+        #send the above files to "localhost:8000/{function_name}"
         request_output = client.post(f"{app_url}/start_classification", data = request_data, files=request_files, headers=dict(Referer=app_url), )
 
         if request_output.ok:
@@ -380,28 +383,26 @@ class ClientTkinterUiDesignApp:
         drop_df = drop_df[[column.strip() for column in feature_list]]  
         drop_df.to_csv("./output.csv", index=False, header=True)
 
-    def readTruncateSequence(self, fasta_fpath):
+    def readTruncateSequence(self, fasta_fpath, verbose = False):
         truncated_seq = ""
 
         with open(fasta_fpath, "r") as f:
             for line in f.readlines(): #chunks() method is essentially opening the file in binary mode.
                 if ">" not in line:
-                    #print("sequence line")
-                    #print(f"New chunk: {line[-1]}")
 
                     to_add = line.strip().replace('\n', '')
-                    #print(f"New line found: {to_add.decode()}")
 
                     truncated_seq += to_add
                 else:
-                    #print("> found.")
+                    if verbose:
+                        print("> found.")
                     if("|" not in line):
                         self.writeOutput("Warning: Please follow the recommended input file structure: >Reference/Database|AccessionID|DateCollected")
                         first_line = line
                         id = line.split(" ")[0].strip().replace('>', '')
                     else:
                         first_line = line
-                        id = line.split("|")[1].strip() #line.split("|")[1].strip().replace('EPI_ISL_', '')
+                        id = line.split("|")[1].strip()
 
         decoded_truncated_seq = truncated_seq[20000:]
 
@@ -432,7 +433,7 @@ class ClientTkinterUiDesignApp:
         for dashing_file in list:
             try:
                 mb_size = os.stat(dashing_file).st_size / (1024*1024)
-                if(mb_size < 18): #less than 18 mb
+                if(mb_size < 18): #dashing files should not be less than 18 mb
                     raise Exception("Dashing files may not have been downloaded correctly. Redownloading the files...")
             except Exception as e:
                 self.writeOutput(str(e))
@@ -499,7 +500,7 @@ class ClientTkinterUiDesignApp:
 
             pred_folder = os.path.join(os.path.dirname(__file__), "predictions")
 
-            zip_name = self.decrypt_name_var.get() #os.path.join(pred_folder, "enc_predictions.zip") if os.listdir(pred_folder) else os.path.join(os.path.dirname(__file__), "enc_predictions.zip")
+            zip_name = self.decrypt_name_var.get()
 
             with zipfile.ZipFile(zip_name, "r") as zObject:
                 zObject.extractall(path=pred_folder)
@@ -507,7 +508,6 @@ class ClientTkinterUiDesignApp:
             enc_file_list = [filename for filename in os.listdir(pred_folder) if filename.endswith(".enc")]
 
             for filename in enc_file_list:
-                #print(filename)
                 with open(os.path.join(pred_folder, filename), "rb") as f:
                     decrypted_prediction = self.fhe_model_client.deserialize_decrypt_dequantize(f.read())[0]
                     decrypted_predictions.append(decrypted_prediction)
@@ -515,19 +515,16 @@ class ClientTkinterUiDesignApp:
             decrypted_predictions_classes = numpy.array(decrypted_predictions).argmax(axis=1)
             final_output = [classes_dict[output] for output in decrypted_predictions_classes]
 
-            # print(final_output)
-            # print(final_output[0])
-
             for i in range(len(final_output)):
                 self.data_dictionary[i]['result'] = final_output[i]
 
-            #print(self.data_dictionary)
             self.writeOutput("Prediction Results:")
             for dictionary in self.data_dictionary.values():
                 self.writeOutput(f"ID {dictionary['id']}: {dictionary['result']}")
                 self.writePredOutput(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M:%S')} -- ID {dictionary['id']}: {dictionary['result']}")
 
             self.writeOutput("Saving prediction results to output file...")
+
             #create a file to save the prediction into
             self.savePredictionResult()
             self.writeOutput("Saving completed! Thank you for using the tool!")
@@ -538,12 +535,10 @@ class ClientTkinterUiDesignApp:
         
     def savePredictionResult(self):
         # save as individual and then add to cache.csv
-        #self.ensureCacheExists()
 
         for dict in self.data_dictionary.values():
             print(dict)
             df = pd.from_dict({key: [str(value).split(" ")[0]] for key, value in dict.items()})
-            #df = df.rename(columns={'id':'Accession ID', 'result':'Lineage'})
             output_name = f"prediction_result_{dict['id']}_{date.today()}.csv"
             df.to_csv(os.path.join(os.path.dirname(__file__), f"predictions/{output_name}"), index=False, header=True)
 #endregion
@@ -594,9 +589,6 @@ def download(url, dest_folder):
 #endregion
 
 if __name__ == "__main__":
-    #download_files = input("Would you like to download the required files? (Type Yes or No.) ")
-    
-    #if(download_files.strip().lower() == "yes"):
     getRequiredFiles()
 
     app = ClientTkinterUiDesignApp()

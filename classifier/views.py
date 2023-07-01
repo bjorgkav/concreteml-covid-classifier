@@ -50,7 +50,6 @@ def create_zip(file_list):
     zip_download_name = "enc_predictions.zip"
     buffer = io.BytesIO()
     zip_file = zipfile.ZipFile(buffer, 'w')
-    #zip_file = zipfile.ZipFile(zip_filename, 'w')
     
     for filename in file_list:
         count += 1
