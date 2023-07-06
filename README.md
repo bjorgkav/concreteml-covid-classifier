@@ -2,9 +2,7 @@
 Repository for an FHE-powered viral strain classification tool and web application implemented through Concrete-ML and Django. The model was compiled on WSL's Linux filesystem (to avoid issues with spaces in the directory and file names).
 
 ## Instructions
-- After cloning the project and running the commands to install the required packages, run the Django development server
-- Open the client-side GUI app and submit the appropriate files. Upload the output of the encryption process and the evaluation keys to the server-side application.
-- Input the prediction output into the final file input field and run the decryption process.
+- For instructions on installation and use, please refer to the user manual in the "Documentation" folder.
 
 ## Tips
 - When using WSL, ensure as much as possible that your filenames contain no spaces since the current version of Concrete-ML (1.0x) on WSL does not account for spaces in filenames due to the different filesystem being used in WSL (Or ensure that your files are located on your Linux filesystem).
