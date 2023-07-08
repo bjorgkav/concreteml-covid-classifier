@@ -577,6 +577,8 @@ def download(url, dest_folder):
 #endregion
 
 if __name__ == "__main__":
+    # force = True if (input("Would you like to re-download files present in the directory? (yes or no): ".lower()) in ["y", "yes"]) else False
+    #getRequiredFiles(force_download=force)
     getRequiredFiles()
 
     app = ClientTkinterUiDesignApp()
