@@ -21,6 +21,7 @@ import os, requests, stat, numpy, json, traceback
 from pandas import DataFrame as pd
 from pandas import read_csv
 from sklearn.preprocessing import LabelEncoder
+import hashlib, re
 
 #for downloading
 os.environ["server_url"] = "localhost:8000"
@@ -533,12 +534,32 @@ class ClientTkinterUiDesignApp:
 
 #region functions outside the class
 
-def getRequiredFiles(force_download = False):
-    """Downloads the required files for the application. Set force_download to True to download the files even if present in the directory. Will be called if the Dashing binaries were not downloaded correctly.
-    
-    By default, targets the project's GitHub repository (see 'files' array) for downloading the files, but can be set to localhost:8000 to download from the local deployment server."""
+def hash_file(filename):
+   """"This function returns the SHA-1 hash
+   of the file passed into it"""
 
-    download_url = f"http://{os.environ['server_url']}/download?filename="
+   # make a hash object
+   h = hashlib.sha1()
+
+   # open file for reading in binary mode
+   with open(filename,'rb') as file:
+
+       # loop till the end of the file
+       chunk = 0
+       while chunk != b'':
+           # read only 1024 bytes at a time
+           chunk = file.read(1024)
+           h.update(chunk)
+
+   # return the hex representation of digest
+   return h.hexdigest()
+
+def getRequiredFiles():
+    """Downloads the required files for the application. Updates any files found present whose hashes don't match the latest version (version stored on the server).
+    
+    By default, targets the 'server_url' environment variable, and accesses its download endpoint."""
+
+    download_url_template = f"http://{os.environ['server_url']}/download?filename="
 
     files = [
         # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
@@ -568,18 +589,21 @@ def getRequiredFiles(force_download = False):
     for file in files:
         # parsed_name = file.split("/")[-1].replace("%20", " ")
         print(f"Checking current directory for file: {file}")
-        if (file not in os.listdir(os.path.dirname(__file__))) or force_download:
-            download(f"{download_url}{file}", os.path.dirname(__file__), file)
+        if (file not in os.listdir(os.path.dirname(__file__))):
+            download(f"{download_url_template}{file}", os.path.dirname(__file__), file)
+        else:
+            download(f"{download_url_template}{file}", os.path.dirname(__file__), file, file_hash=hash_file(file))
     
-def download(url, dest_folder, dest_name):
+def download(url, dest_folder, dest_name, file_hash=None):
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
     
     file_path = os.path.join(dest_folder, dest_name)
 
     r = requests.get(url, stream=True)
-
-    if r.ok:
+    received_hash = r.headers['hash']
+    print(f"received hash = {received_hash} and file_hash = {file_hash}")
+    if r.ok and received_hash != file_hash:
         print("saving to", os.path.abspath(file_path))
         with open(file_path, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024 * 8):
@@ -587,6 +611,8 @@ def download(url, dest_folder, dest_name):
                     f.write(chunk)
                     f.flush()
                     os.fsync(f.fileno())
+    elif r.ok:
+        print(f"{dest_name} seems to already be the latest version.")
     else:  # HTTP status code 4XX/5XX
         print("Download failed: status code {}\n{}".format(r.status_code, r.text))
 #endregion

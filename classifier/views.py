@@ -8,6 +8,27 @@ import subprocess
 from pandas import DataFrame as pd
 from pandas import read_csv
 from concrete.ml.deployment import FHEModelServer
+import hashlib
+
+def hash_file(filename):
+   """"This function returns the SHA-1 hash
+   of the file passed into it"""
+
+   # make a hash object
+   h = hashlib.sha1()
+
+   # open file for reading in binary mode
+   with open(filename,'rb') as file:
+
+       # loop till the end of the file
+       chunk = 0
+       while chunk != b'':
+           # read only 1024 bytes at a time
+           chunk = file.read(1024)
+           h.update(chunk)
+
+   # return the hex representation of digest
+   return h.hexdigest()
 
 # Create your views here.
 def index(request):
@@ -72,6 +93,7 @@ def clean_predictions_folder():
 
 def serve_downloadable(request):
     filename = request.GET.get('filename')
+
     if request.method == "GET":
         response = download_file(filename=filename)
         return response
@@ -79,6 +101,7 @@ def serve_downloadable(request):
         return HttpResponse("Please use a GET request to access this endpoint.")
 
 def download_file(filename):
+    #assume server will always have latest version of software
     download_directories = [
         os.path.join(BASE_DIR, "classifier/ClientDownloads"),
         os.path.join(BASE_DIR, "classifier/AlternativeDashingDownloads"),
@@ -89,7 +112,7 @@ def download_file(filename):
         if filename in os.listdir(dir):
             download_fname = os.path.join(dir, filename)
             response = FileResponse(open(download_fname, 'rb'))
-            # file_name = filename[5:]
-            # response['Content-Disposition'] = 'inline; filename=' + file_name
+            response['Content-Disposition'] = f'attachment; filename={filename}'
+            response['hash']=hash_file(download_fname)
             print(f"Serving {filename} to client...")
             return response
