@@ -22,6 +22,9 @@ from pandas import DataFrame as pd
 from pandas import read_csv
 from sklearn.preprocessing import LabelEncoder
 
+#for downloading
+os.environ["server_url"] = "localhost:8000"
+
 #region class
 class ClientTkinterUiDesignApp:
     def __init__(self, master=None):
@@ -266,7 +269,7 @@ class ClientTkinterUiDesignApp:
 
             self.writeOutput("Saved encrypted inputs and key files to 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' respectively.\nPlease do not move these files until after prediction.")
 
-            app_url = "http://localhost:8000"
+            app_url = f"http://{os.environ['server_url']}"
 
             client = requests.session()
 
@@ -282,7 +285,7 @@ class ClientTkinterUiDesignApp:
     def sendEncryptRequestToServer(self, encrypt_filename, client):
         """Sends 'encrypted_input.txt' and 'serialized_evaluation_keys.ekl' (expected to be located in the same directory as the app) to the server-side app through the Python requests library. URL is set to localhost:8000 in development."""
         
-        app_url = "http://localhost:8000"
+        app_url = f"http://{os.environ['server_url']}"
 
         if 'csrftoken' in client.cookies:
             # Django 1.6 and up
@@ -534,33 +537,45 @@ def getRequiredFiles(force_download = False):
     """Downloads the required files for the application. Set force_download to True to download the files even if present in the directory. Will be called if the Dashing binaries were not downloaded correctly.
     
     By default, targets the project's GitHub repository (see 'files' array) for downloading the files, but can be set to localhost:8000 to download from the local deployment server."""
+
+    download_url = f"http://{os.environ['server_url']}/download?filename="
+
     files = [
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell512.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashingShell128.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashingShell256.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite512.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite128.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite256.sh",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/server.zip",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/features_and_classes.txt",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s128",
-        r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s256",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashing_s512",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/Compiled%20Model/client.zip",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/dashingShell512.sh",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashingShell128.sh",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashingShell256.sh",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/readHLLandWrite512.sh",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite128.sh",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/readHLLandWrite256.sh",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/ClientDownloads/features_and_classes.txt",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s128",
+        # r"https://raw.githubusercontent.com/bjorgkav/concreteml-covid-classifier/main/client/AlternativeDashingDownloads/dashing_s256",
+        "client.zip",
+        "features_and_classes.txt",
+        "dashing_s512",
+        "dashingShell512.sh",
+        "readHLLandWrite512.sh",
+        "dashing_s256",
+        "dashingShell256.sh",
+        "readHLLandWrite256.sh",
+        "dashing_s128",
+        "dashingShell128.sh",
+        "readHLLandWrite128.sh",
         ]
     
     for file in files:
-        parsed_name = file.split("/")[-1].replace("%20", " ")
-        print(f"Checking current directory for file: {parsed_name}")
-        if (parsed_name not in os.listdir(os.path.dirname(__file__))) or force_download:
-            download(file, os.path.dirname(__file__))
+        # parsed_name = file.split("/")[-1].replace("%20", " ")
+        print(f"Checking current directory for file: {file}")
+        if (file not in os.listdir(os.path.dirname(__file__))) or force_download:
+            download(f"{download_url}{file}", os.path.dirname(__file__), file)
     
-def download(url, dest_folder):
+def download(url, dest_folder, dest_name):
     if not os.path.exists(dest_folder):
         os.makedirs(dest_folder)
-
-    filename = url.split('/')[-1].replace(" ", "_")
-    file_path = os.path.join(dest_folder, filename)
+    
+    file_path = os.path.join(dest_folder, dest_name)
 
     r = requests.get(url, stream=True)
 
@@ -577,8 +592,6 @@ def download(url, dest_folder):
 #endregion
 
 if __name__ == "__main__":
-    # force = True if (input("Would you like to re-download files present in the directory? (yes or no): ".lower()) in ["y", "yes"]) else False
-    #getRequiredFiles(force_download=force)
     getRequiredFiles()
 
     app = ClientTkinterUiDesignApp()

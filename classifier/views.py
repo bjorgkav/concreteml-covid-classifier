@@ -19,7 +19,7 @@ def start_classification(request):
     clean_predictions_folder()
 
     count = 0
-    model_path = os.path.join(BASE_DIR, "Compiled Model") 
+    model_path = os.path.join(BASE_DIR, "classifier/Compiled Model") 
     keys_path = os.path.join(BASE_DIR, "classifier/keys")
     keys_file = request.FILES['keys_file']
     pred_dir = os.path.join(BASE_DIR, "classifier/predictions")
@@ -69,3 +69,27 @@ def clean_predictions_folder():
     if(os.listdir(pred_dir)):
         for f in os.listdir(pred_dir):
             os.remove(os.path.join(pred_dir, f))
+
+def serve_downloadable(request):
+    filename = request.GET.get('filename')
+    if request.method == "GET":
+        response = download_file(filename=filename)
+        return response
+    elif request.method == "POST":
+        return HttpResponse("Please use a GET request to access this endpoint.")
+
+def download_file(filename):
+    download_directories = [
+        os.path.join(BASE_DIR, "classifier/ClientDownloads"),
+        os.path.join(BASE_DIR, "classifier/AlternativeDashingDownloads"),
+        os.path.join(BASE_DIR, "classifier/Compiled Model")
+    ]
+
+    for dir in download_directories:
+        if filename in os.listdir(dir):
+            download_fname = os.path.join(dir, filename)
+            response = FileResponse(open(download_fname, 'rb'))
+            # file_name = filename[5:]
+            # response['Content-Disposition'] = 'inline; filename=' + file_name
+            print("Serving filname to client...")
+            return response
