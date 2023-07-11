@@ -1,4 +1,7 @@
 #!/bin/bash
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 #clear output file
 rm ./output.txt
 
@@ -15,7 +18,7 @@ printf "%s\n" "feature_$i" >> ./output.txt
 
 for f in ./fastas/*.hll
 do 
-    content=$(./dashing_s512 view $f)
+    content=$("${SCRIPT_DIR}/dashing_s512" view $f)
     echo "$f, $content" >> ./output.txt
 done
 

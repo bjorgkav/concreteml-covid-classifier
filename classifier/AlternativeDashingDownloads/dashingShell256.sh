@@ -4,6 +4,10 @@
 #split the each sequence into k-mers, and 
 #compute the HLL sketch of each sequence, with a sketch size (spacing) of 9
 
+dir="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
+
+cd "${dir}"
+
 echo "Running Dashing tool..."
 
 ./dashing_s256 sketch -k31 -p13 -S9 fastas/*.fasta
