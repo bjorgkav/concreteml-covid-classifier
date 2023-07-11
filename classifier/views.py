@@ -91,5 +91,5 @@ def download_file(filename):
             response = FileResponse(open(download_fname, 'rb'))
             # file_name = filename[5:]
             # response['Content-Disposition'] = 'inline; filename=' + file_name
-            print("Serving filname to client...")
+            print(f"Serving {filename} to client...")
             return response
