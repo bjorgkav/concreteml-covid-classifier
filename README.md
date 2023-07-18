@@ -4,6 +4,11 @@ Repository for an FHE-powered viral strain classification tool and web applicati
 ## Instructions
 - For instructions on installation and use, please refer to the user manual in the "Documentation" folder.
 
+## Virtual Machine .ova File
+Users can also access a pre-installed and configured version of the classifier system by downloading the .ova file available at the following link: [https://drive.google.com/file/d/1OmmNJIEOzR2r4Wy_puAjJap37VheIjBJ/view?usp=sharing](https://drive.google.com/file/d/1OmmNJIEOzR2r4Wy_puAjJap37VheIjBJ/view?usp=sharing).
+
+The .ova file can be imported into virtualization software such as Virtualbox for use. As the system requires the execution of AVX and AVX2 instructions, please ensure that Hyper-V is disabled on your host machine if you use the Windows operating system. Please follow these guides at [makeuseof.com](https://www.makeuseof.com/windows-11-disable-hyper-v/) and [learn.microsoft.com](https://learn.microsoft.com/en-us/troubleshoot/windows-client/application-management/virtualization-apps-not-work-with-hyper-v) to disable Hyper-V on Windows machines.
+
 ## Tips
 - When using WSL, ensure as much as possible that your filenames contain no spaces since the current version of Concrete-ML (1.0x) on WSL does not account for spaces in filenames due to the different filesystem being used in WSL (Or ensure that your files are located on your Linux filesystem).
 - If you can't fix your filenames without risking breaking several applications, it's recommended to finish training, compilation, and saving of your Concrete-ML model on the other platforms for using Concrete-ML (Google Colab, Kaggle, Docker container).
