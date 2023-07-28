@@ -13,13 +13,6 @@ The access credentials for the VM are as follows:
 - Username: student
 - Password: bscs114
 
-# sp-concreteml-covid-classifier
-Repository for an FHE-powered viral strain classification tool and web application implemented through Concrete-ML and Django. The model was compiled on WSL's Linux filesystem (to avoid issues with spaces in the directory and file names).
-
-## Instructions
-- For instructions on installation and use, please refer to [DEVELOPMENT.md](./manual/DEVELOPMENT.md#installation) and [HELP.md](./manual/HELP.md).
-- Quick link for the OVA file: [https://drive.google.com/file/d/1OmmNJIEOzR2r4Wy_puAjJap37VheIjBJ/view?usp=sharing](https://drive.google.com/file/d/1OmmNJIEOzR2r4Wy_puAjJap37VheIjBJ/view?usp=sharing).
-
 ## System and Technical Architecture
 This tool was developed using the following dependencies:
 - **Pygubu and Pygubu-designer** - A “what you see is what you get" (WYSIWYG) GUI designer for the Python’s tkinter module, as well as CustomTkinter
